@@ -2,9 +2,20 @@
 
 import Link from 'next/link';
 import { useLanguage } from '../context/LanguageContext';
+import { useCookieConsent } from '../context/CookieConsentContext';
+import { useState, useEffect } from 'react';
 
 export default function Contact() {
   const { lang } = useLanguage();
+  const { consent } = useCookieConsent();
+  const [showMap, setShowMap] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  useEffect(() => {
+    if (consent?.functional) {
+      setShowMap(true);
+    }
+  }, [consent]);
 
   const t = {
     back: lang === 'de' ? 'Zur Startseite' : 'Back Home',
@@ -55,7 +66,39 @@ export default function Contact() {
         </div>
       </div>
       <div className="w-full md:w-1/2 h-[50vh] md:h-screen bg-gray-200 relative">
-        <iframe src="https://maps.google.com/maps?q=Spitalstrasse%2019,%2097421%20Schweinfurt&t=&z=16&ie=UTF8&iwloc=&output=embed" className="absolute inset-0 w-full h-full border-0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="MainBar Location"></iframe>
+        {showMap ? (
+          <iframe
+            src="https://maps.google.com/maps?q=Spitalstrasse%2019,%2097421%20Schweinfurt&t=&z=16&ie=UTF8&iwloc=&output=embed"
+            className="absolute inset-0 w-full h-full border-0"
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="MainBar Location"
+            onLoad={() => setMapLoaded(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gray-100">
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <p className="text-lg text-gray-600 mb-2">Karte wird nicht angezeigt</p>
+            <p className="text-sm text-gray-400 mb-4 max-w-xs">
+              Für die Anzeige von Google Maps benötigen wir Ihre Einwilligung in funktionale Cookies.
+            </p>
+            <button
+              onClick={() => setShowMap(true)}
+              className="text-[#cda1b1] hover:text-[#353941] font-bold uppercase tracking-widest text-xs border-b border-transparent hover:border-[#cda1b1] transition-colors"
+            >
+              Karte laden & Einwilligen
+            </button>
+            <p className="text-xs text-gray-400 mt-4 max-w-xs">
+              Dabei werden Daten an Google übermittelt. Mehr in der <a href="/datenschutz" className="underline hover:text-[#cda1b1]">Datenschutzerklärung</a>.
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

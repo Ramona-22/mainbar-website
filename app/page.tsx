@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, animate } from "framer-motion";
 import { collection, onSnapshot, query, addDoc, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { useCookieConsent } from "./context/CookieConsentContext";
 
 const menuCategories = [
   "FRÜHSTÜCK",
@@ -171,6 +172,8 @@ export default function UnifiedHomePage() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gdprConsent, setGdprConsent] = useState(false);
+  const { consent: cookieConsent } = useCookieConsent();
 
   const [reviewForm, setReviewForm] = useState({
     author: "",
@@ -285,6 +288,12 @@ export default function UnifiedHomePage() {
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!gdprConsent) {
+      alert("Bitte stimmen Sie der Datenschutzerklärung zu, um die Bewertung abzusenden.");
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       await addDoc(collection(db, "reviews"), {
@@ -388,6 +397,20 @@ export default function UnifiedHomePage() {
                     className="border-b border-gray-200 py-1.5 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] text-xs resize-none"
                     placeholder="Deine Bewertung"
                   />
+                </div>
+
+                <div className="flex items-start gap-3 mt-2">
+                  <input
+                    type="checkbox"
+                    id="reviewGdprConsent"
+                    checked={gdprConsent}
+                    onChange={(e) => setGdprConsent(e.target.checked)}
+                    required
+                    className="mt-1 w-4 h-4 accent-[#cda1b1] border-gray-300 rounded"
+                  />
+                  <label htmlFor="reviewGdprConsent" className="text-xs text-[#a0a0a0] leading-relaxed">
+                    Ich habe die <a href="/datenschutz" className="text-[#cda1b1] hover:underline">Datenschutzerklärung</a> gelesen und stimme der Veröffentlichung meines Vornamens, der Bewertung und des Textes zu. (Art. 6 Abs. 1 lit. a DSGVO)
+                  </label>
                 </div>
 
                 <button
@@ -608,7 +631,7 @@ export default function UnifiedHomePage() {
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="text-center mb-10 md:mb-16">
             <h2 className="font-serif text-4xl md:text-5xl text-[#2d2d2d] mb-4 md:mb-6">
-              Maine Menü
+              Main Menü
             </h2>
             <div className="w-12 h-px bg-[#cda1b1] mx-auto"></div>
           </div>
@@ -772,6 +795,36 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
           <div className="flex gap-6">
             <Link href="/impressum" className="text-xs text-[#a0a0a0] hover:text-white uppercase tracking-widest transition-colors">Impressum</Link>
             <Link href="/datenschutz" className="text-xs text-[#a0a0a0] hover:text-white uppercase tracking-widest transition-colors">Datenschutz</Link>
+            <button 
+              onClick={() => { 
+                const event = new CustomEvent('open-cookie-settings');
+                window.dispatchEvent(event);
+              }} 
+              className="text-xs text-[#a0a0a0] hover:text-white uppercase tracking-widest transition-colors cursor-pointer"
+            >
+              Cookie-Einstellungen
+            </button>
+            <button 
+              onClick={() => {
+                const email = prompt("Bitte geben Sie Ihre E-Mail-Adresse ein, um einen Löschantrag zu stellen:");
+                if (email) {
+                  fetch("/api/gdpr-delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, type: "all" })
+                  }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                      alert(data.message || "Ihre Daten wurden erfolgreich gelöscht.");
+                    } else {
+                      alert(data.error || "Fehler beim Löschen der Daten.");
+                    }
+                  }).catch(() => alert("Fehler bei der Anfrage."));
+                }
+              }}
+              className="text-xs text-[#a0a0a0] hover:text-white uppercase tracking-widest transition-colors cursor-pointer"
+            >
+              Daten löschen
+            </button>
           </div>
         </div>
       </footer>

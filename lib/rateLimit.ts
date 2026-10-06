@@ -12,7 +12,12 @@ export interface RateLimitResult {
 const WINDOW = "10 m";
 const MAX_REQUESTS = 5;
 
+// Stricter limits for GDPR deletion requests: 2 per 10 minutes
+const GDPR_WINDOW = "10 m";
+const GDPR_MAX_REQUESTS = 2;
+
 let ratelimit: Ratelimit | null = null;
+let gdprRatelimit: Ratelimit | null = null;
 let warnedMissingConfig = false;
 
 function getRatelimit(): Ratelimit | null {
@@ -40,8 +45,29 @@ function getRatelimit(): Ratelimit | null {
   return ratelimit;
 }
 
-export async function checkRateLimit(identifier: string): Promise<RateLimitResult> {
-  const limiter = getRatelimit();
+function getGdprRatelimit(): Ratelimit | null {
+  if (gdprRatelimit) return gdprRatelimit;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    return null;
+  }
+
+  gdprRatelimit = new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(GDPR_MAX_REQUESTS, GDPR_WINDOW),
+    prefix: "mainbar-gdpr-ratelimit",
+  });
+  return gdprRatelimit;
+}
+
+export async function checkRateLimit(
+  identifier: string,
+  endpoint: "booking" | "gdpr-delete" = "booking"
+): Promise<RateLimitResult> {
+  const limiter = endpoint === "gdpr-delete" ? getGdprRatelimit() : getRatelimit();
   if (!limiter) {
     // Fail open when not configured (e.g. local dev) rather than blocking real usage.
     return { allowed: true };

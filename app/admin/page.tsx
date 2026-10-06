@@ -287,7 +287,7 @@ export default function AdminPortal() {
           className="w-full max-w-md bg-white p-8 sm:p-10 rounded-3xl shadow-2xl"
         >
           <div className="text-center mb-8">
-            <h1 className="font-[family-name:var(--font-script)] text-5xl text-[#cda1b1] mb-2">
+            <h1 className="font-(family-name:--font-script)-5xl text-[#cda1b1] mb-2">
               MainBar
             </h1>
             <h2 className="text-[#a0a0a0] uppercase tracking-widest text-xs font-bold">
@@ -351,7 +351,7 @@ export default function AdminPortal() {
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
-          <h1 className="font-[family-name:var(--font-script)] text-2xl text-[#cda1b1]">
+          <h1 className="font-(family-name:--font-script) text-2xl text-[#cda1b1]">
             MainBar
           </h1>
         </div>
@@ -381,7 +381,7 @@ export default function AdminPortal() {
               className="fixed top-0 left-0 bottom-0 z-50 w-72 bg-white shadow-2xl flex flex-col md:hidden"
             >
               <div className="p-6 border-b flex justify-between items-center">
-                <h1 className="font-[family-name:var(--font-script)] text-3xl text-[#cda1b1]">
+                <h1 className="font-(family-name:--font-script) text-3xl text-[#cda1b1]">
                   MainBar
                 </h1>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="text-2xl">
@@ -440,7 +440,7 @@ export default function AdminPortal() {
            the viewport regardless of how tall the main content grows ===== */}
       <aside className="w-64 bg-white border-r border-gray-100 hidden md:flex md:flex-col md:h-screen md:sticky md:top-0 md:overflow-y-auto">
         <div className="p-8 border-b">
-          <h1 className="font-[family-name:var(--font-script)] text-3xl text-[#cda1b1]">
+          <h1 className="font-(family-name:--font-script) text-3xl text-[#cda1b1]">
             MainBar
           </h1>
         </div>
@@ -636,7 +636,7 @@ export default function AdminPortal() {
 
         <AnimatePresence>
           {isMenuModalOpen && (
-            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
+            <div className="fixed inset-0 z-100 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Great_Vibes, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "./context/LanguageContext";
+import { CookieConsentProvider } from "./context/CookieConsentContext";
+import CookieConsentBanner from "./components/CookieConsentBanner";
 
 // Optimize fonts for faster mobile loading
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -38,9 +40,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${greatVibes.variable} ${playfair.variable} font-sans antialiased`}>
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <CookieConsentProvider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+          <CookieConsentBanner />
+        </CookieConsentProvider>
       </body>
     </html>
   );

@@ -5,11 +5,14 @@ import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../lib/firebase"; 
 import Link from "next/link";
+import { useCookieConsent } from "../context/CookieConsentContext";
 
 export default function BookingPage() {
   // State variables needed for the form and loading animations
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [gdprConsent, setGdprConsent] = useState(false);
+  const { consent: cookieConsent } = useCookieConsent();
   
   const [formData, setFormData] = useState({
     seating: "inside",
@@ -27,6 +30,12 @@ export default function BookingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!gdprConsent) {
+      alert("Bitte stimmen Sie der Datenschutzerklärung zu, um das Formular abzusenden.");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -116,6 +125,20 @@ export default function BookingPage() {
                   <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2">Email</label>
                   <input name="email" type="email" required value={formData.email} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
                 </div>
+              </div>
+
+              <div className="flex items-start gap-3 mt-6">
+                <input
+                  type="checkbox"
+                  id="gdprConsent"
+                  checked={gdprConsent}
+                  onChange={(e) => setGdprConsent(e.target.checked)}
+                  required
+                  className="mt-1 w-4 h-4 accent-[#cda1b1] border-gray-300 rounded"
+                />
+                <label htmlFor="gdprConsent" className="text-xs text-[#a0a0a0] leading-relaxed">
+                  Ich habe die <a href="/datenschutz" className="text-[#cda1b1] hover:underline">Datenschutzerklärung</a> gelesen und stimme der Verarbeitung meiner Daten zur Bearbeitung dieser Anfrage zu. (Art. 6 Abs. 1 lit. a DSGVO)
+                </label>
               </div>
 
               <motion.button 
