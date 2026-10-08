@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, animate } from "framer-motion";
 import { collection, onSnapshot, query, addDoc, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { useCookieConsent } from "./context/CookieConsentContext";
 
 const menuCategories = [
   "FRÜHSTÜCK",
@@ -76,7 +75,26 @@ const acrosticPoem = [
   { letter: "T", rest: "ALENTSCHMIEDE" }
 ];
 
-const shuffleArray = (array: any[]) => {
+type MenuSize = { label?: string; price: string | number };
+
+type MenuItem = {
+  id: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  price?: string | number;
+  sizes?: MenuSize[];
+  isExtra?: boolean | string;
+};
+
+type Review = {
+  id: string;
+  author: string;
+  text: string;
+  rating: number;
+};
+
+const shuffleArray = <T,>(array: T[]): T[] => {
   const newArr = [...array];
   for (let i = newArr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -111,7 +129,7 @@ const BackgroundVideo = ({
     const attemptPlay = async () => {
       try {
         await video.play();
-      } catch (error) {
+      } catch {
         setVideoBlocked(true);
       }
     };
@@ -156,7 +174,7 @@ const BackgroundVideo = ({
   );
 };
 
-const parsePrice = (price: any): number => {
+const parsePrice = (price: unknown): number => {
   if (typeof price === "number") return price;
   if (!price) return 0;
   const cleaned = String(price).replace(",", ".").replace(/[^0-9.]/g, "");
@@ -166,14 +184,13 @@ const parsePrice = (price: any): number => {
 
 export default function UnifiedHomePage() {
   const [activeTab, setActiveTab] = useState(menuCategories[0]);
-  const [firestoreMenuData, setFirestoreMenuData] = useState<any[]>([]);
-  const [currentMenuImage, setCurrentMenuImage] = useState<string | null>(null);
+  const [firestoreMenuData, setFirestoreMenuData] = useState<MenuItem[]>([]);
+  const currentMenuImage = defaultTabImages[activeTab] || null;
 
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
-  const { consent: cookieConsent } = useCookieConsent();
 
   const [reviewForm, setReviewForm] = useState({
     author: "",
@@ -222,7 +239,7 @@ export default function UnifiedHomePage() {
         snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data()
-        }))
+        }) as MenuItem)
       );
     });
     return () => unsubMenu();
@@ -231,11 +248,9 @@ export default function UnifiedHomePage() {
   useEffect(() => {
     const qReviews = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
     const unsubReviews = onSnapshot(qReviews, (snapshot) => {
-      let fetchedReviews: any[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      fetchedReviews = fetchedReviews.filter((r: any) => r.rating >= 3);
+      const fetchedReviews = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
+        .filter((r) => r.rating >= 3);
       if (fetchedReviews.length > 0) {
         setReviews(shuffleArray(fetchedReviews));
       } else {
@@ -259,20 +274,16 @@ export default function UnifiedHomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  const isExtraItem = (val: any) =>
+  const isExtraItem = (val: unknown) =>
     val === true || String(val).toLowerCase() === "true";
 
   const mainItems = firestoreMenuData
-    .filter((item: any) => item.category === activeTab && !isExtraItem(item.isExtra))
-    .sort((a: any, b: any) => parsePrice(b.price) - parsePrice(a.price));
+    .filter((item) => item.category === activeTab && !isExtraItem(item.isExtra))
+    .sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
 
   const activeExtras = firestoreMenuData
-    .filter((item: any) => item.category === activeTab && isExtraItem(item.isExtra))
-    .sort((a: any, b: any) => parsePrice(b.price) - parsePrice(a.price));
-
-  useEffect(() => {
-    setCurrentMenuImage(defaultTabImages[activeTab] || null);
-  }, [activeTab]);
+    .filter((item) => item.category === activeTab && isExtraItem(item.isExtra))
+    .sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
 
   const scrollToMenu = () => {
     const menuSection = document.getElementById("menu-section");
@@ -314,11 +325,11 @@ export default function UnifiedHomePage() {
   };
 
   // Helper to render price / sizes
-  const renderPrice = (item: any) => {
+  const renderPrice = (item: MenuItem) => {
     if (item.sizes && Array.isArray(item.sizes) && item.sizes.length > 0) {
       return (
         <div className="flex flex-col items-end gap-0.5">
-          {item.sizes.map((s: any, idx: number) => (
+          {item.sizes.map((s, idx) => (
             <span key={idx} className="font-bold text-[#cda1b1] text-sm md:text-base whitespace-nowrap">
               {s.label && <span className="text-[#a0a0a0] font-normal mr-1.5 text-xs">{s.label}</span>}
               € {s.price}
@@ -561,7 +572,7 @@ export default function UnifiedHomePage() {
                     {"☆".repeat(5 - review.rating)}
                   </div>
                   <p className="text-[#2d2d2d] text-base md:text-lg italic leading-relaxed mb-6 font-light">
-                    "{review.text}"
+                    &bdquo;{review.text}&ldquo;
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -693,7 +704,7 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
                   </p>
                 ) : (
                   <>
-                    {mainItems.map((item: any) => (
+                    {mainItems.map((item) => (
                       <div key={item.id} className="mb-7 md:mb-9 group">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start border-b border-gray-300/50 pb-2 mb-2 gap-2 sm:gap-4">
                           <h3 className="font-serif text-lg md:text-xl text-[#2d2d2d] group-hover:text-[#cda1b1] transition-colors flex items-center gap-2.5">
@@ -721,7 +732,7 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
                           Extras
                         </h4>
                         <div className="flex flex-col gap-2.5">
-                          {activeExtras.map((item: any) => (
+                          {activeExtras.map((item) => (
                             <div key={item.id} className="flex items-baseline gap-2 text-sm md:text-base text-[#2d2d2d]">
                               <span className="flex items-center gap-1.5">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-[#d66a7a] opacity-70 shrink-0">

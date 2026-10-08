@@ -6,18 +6,12 @@ import { useCookieConsent } from "../context/CookieConsentContext";
 import Link from "next/link";
 
 export default function CookieConsentBanner() {
-  const { consent, showBanner, showSettings: contextShowSettings, acceptAll, acceptNecessaryOnly, savePreferences, closeBanner, openBanner, openSettings } = useCookieConsent();
-  const [showSettings, setShowSettings] = useState(contextShowSettings);
+  const { consent, showBanner, showSettings, acceptAll, acceptNecessaryOnly, savePreferences, closeBanner, openSettings } = useCookieConsent();
   const [preferences, setPreferences] = useState({
     analytics: false,
     marketing: false,
     functional: false,
   });
-
-  // Sync with context showSettings
-  useEffect(() => {
-    setShowSettings(contextShowSettings);
-  }, [contextShowSettings]);
 
   // Listen for custom event to open cookie settings from footer link
   useEffect(() => {
@@ -39,7 +33,6 @@ export default function CookieConsentBanner() {
 
   const handleSavePreferences = () => {
     savePreferences(preferences);
-    setShowSettings(false);
   };
 
   // Render if banner should show OR if settings panel should show (for footer link)
