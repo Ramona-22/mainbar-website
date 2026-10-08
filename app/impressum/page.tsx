@@ -24,7 +24,7 @@ export default function ImpressumPage() {
               <br />
               MainBar
               <br />
-              [Straße und Hausnummer]
+              Spitalstraße 19
               <br />
               97421 Schweinfurt
             </p>
@@ -33,9 +33,9 @@ export default function ImpressumPage() {
           <section>
             <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">Kontakt</h2>
             <p className="text-[#4a4a4a]">
-              Telefon: [Telefonnummer]
+              Telefon: <a href="tel:+491702278096" className="hover:text-[#cda1b1]">+49 170 2278096</a>
               <br />
-              E-Mail: [E-Mail-Adresse]
+              E-Mail: <a href="mailto:info@mainbar-sw.de" className="hover:text-[#cda1b1]">info@mainbar-sw.de</a>
             </p>
           </section>
 
@@ -50,7 +50,11 @@ export default function ImpressumPage() {
             <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">
               Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
             </h2>
-            <p className="text-[#4a4a4a]">[Name, Anschrift wie oben]</p>
+            <p className="text-[#4a4a4a]">
+              [Vollständiger Name der Inhaberin]
+              <br />
+              Spitalstraße 19, 97421 Schweinfurt
+            </p>
           </section>
 
           <section>

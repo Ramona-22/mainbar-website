@@ -5,14 +5,12 @@ import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../lib/firebase"; 
 import Link from "next/link";
-import { useCookieConsent } from "../context/CookieConsentContext";
 
 export default function BookingPage() {
   // State variables needed for the form and loading animations
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
-  const { consent: cookieConsent } = useCookieConsent();
   
   const [formData, setFormData] = useState({
     seating: "inside",
@@ -88,8 +86,8 @@ export default function BookingPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 <div className="flex flex-col">
-                  <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2">Sitzplatz</label>
-                  <select name="seating" value={formData.seating} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent cursor-pointer">
+                  <label htmlFor="booking-seating" className="text-xs uppercase tracking-widest text-[#767676] mb-2">Sitzplatz</label>
+                  <select id="booking-seating" name="seating" value={formData.seating} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent cursor-pointer">
                     <option value="inside">Im Café (Inside)</option>
                     <option value="outside">Außenbereich (Outside)</option>
                     <option value="catering">Externes Catering</option>
@@ -97,33 +95,33 @@ export default function BookingPage() {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2">Personen (Max 30)</label>
-                  <input name="guests" type="number" max="30" min="1" required value={formData.guests} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
+                  <label htmlFor="booking-guests" className="text-xs uppercase tracking-widest text-[#767676] mb-2">Personen (Max 30)</label>
+                  <input id="booking-guests" name="guests" type="number" max="30" min="1" required value={formData.guests} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
                 </div>
 
                 <div className="flex flex-col md:col-span-2">
-                  <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2">Datum</label>
-                  <input name="date" type="date" required value={formData.date} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent cursor-pointer" />
+                  <label htmlFor="booking-date" className="text-xs uppercase tracking-widest text-[#767676] mb-2">Datum</label>
+                  <input id="booking-date" name="date" type="date" required value={formData.date} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent cursor-pointer" />
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2">Bundesland</label>
-                  <input name="state" type="text" required placeholder="Bayern" value={formData.state} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
+                  <label htmlFor="booking-state" className="text-xs uppercase tracking-widest text-[#767676] mb-2">Bundesland</label>
+                  <input id="booking-state" name="state" type="text" required placeholder="Bayern" value={formData.state} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
                 </div>
                 
                 <div className="flex flex-col">
-                  <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2">Stadt</label>
-                  <input name="city" type="text" required placeholder="Schweinfurt" value={formData.city} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
+                  <label htmlFor="booking-city" className="text-xs uppercase tracking-widest text-[#767676] mb-2">Stadt</label>
+                  <input id="booking-city" name="city" type="text" required placeholder="Schweinfurt" value={formData.city} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2">Telefon</label>
-                  <input name="phone" type="tel" required value={formData.phone} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
+                  <label htmlFor="booking-phone" className="text-xs uppercase tracking-widest text-[#767676] mb-2">Telefon</label>
+                  <input id="booking-phone" name="phone" type="tel" required value={formData.phone} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
                 </div>
                 
                 <div className="flex flex-col">
-                  <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2">Email</label>
-                  <input name="email" type="email" required value={formData.email} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
+                  <label htmlFor="booking-email" className="text-xs uppercase tracking-widest text-[#767676] mb-2">Email</label>
+                  <input id="booking-email" name="email" type="email" required value={formData.email} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent" />
                 </div>
               </div>
 
@@ -136,7 +134,7 @@ export default function BookingPage() {
                   required
                   className="mt-1 w-4 h-4 accent-[#cda1b1] border-gray-300 rounded"
                 />
-                <label htmlFor="gdprConsent" className="text-xs text-[#a0a0a0] leading-relaxed">
+                <label htmlFor="gdprConsent" className="text-xs text-[#767676] leading-relaxed">
                   Ich habe die <a href="/datenschutz" className="text-[#cda1b1] hover:underline">Datenschutzerklärung</a> gelesen und stimme der Verarbeitung meiner Daten zur Bearbeitung dieser Anfrage zu. (Art. 6 Abs. 1 lit. a DSGVO)
                 </label>
               </div>

@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "./context/LanguageContext";
 import { CookieConsentProvider } from "./context/CookieConsentContext";
 import CookieConsentBanner from "./components/CookieConsentBanner";
+import { siteUrl } from "./siteUrl";
 
 // Optimize fonts for faster mobile loading
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -23,8 +24,17 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "MainBar | Schweinfurt",
   description: "Bei uns ist Qualität das Produkt der Liebe zum Detail.",
+  openGraph: {
+    type: "website",
+    locale: "de_DE",
+    siteName: "MainBar",
+    title: "MainBar | Café & Bar in Schweinfurt",
+    description: "Frühstück, Winzerfladen, Kaffee und Drinks in der Spitalstraße 19, Schweinfurt.",
+    images: ["/media/breakfast.jpg"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -38,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="de">
       <body className={`${inter.variable} ${greatVibes.variable} ${playfair.variable} font-sans antialiased`}>
         <CookieConsentProvider>
           <LanguageProvider>

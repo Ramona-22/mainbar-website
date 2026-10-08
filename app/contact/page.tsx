@@ -3,19 +3,13 @@
 import Link from 'next/link';
 import { useLanguage } from '../context/LanguageContext';
 import { useCookieConsent } from '../context/CookieConsentContext';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function Contact() {
   const { lang } = useLanguage();
   const { consent } = useCookieConsent();
-  const [showMap, setShowMap] = useState(false);
-  const [mapLoaded, setMapLoaded] = useState(false);
-
-  useEffect(() => {
-    if (consent?.functional) {
-      setShowMap(true);
-    }
-  }, [consent]);
+  const [mapRequested, setMapRequested] = useState(false);
+  const showMap = mapRequested || !!consent?.functional;
 
   const t = {
     back: lang === 'de' ? 'Zur Startseite' : 'Back Home',
@@ -74,7 +68,6 @@ export default function Contact() {
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             title="MainBar Location"
-            onLoad={() => setMapLoaded(true)}
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gray-100">
@@ -89,7 +82,7 @@ export default function Contact() {
               Für die Anzeige von Google Maps benötigen wir Ihre Einwilligung in funktionale Cookies.
             </p>
             <button
-              onClick={() => setShowMap(true)}
+              onClick={() => setMapRequested(true)}
               className="text-[#cda1b1] hover:text-[#353941] font-bold uppercase tracking-widest text-xs border-b border-transparent hover:border-[#cda1b1] transition-colors"
             >
               Karte laden & Einwilligen

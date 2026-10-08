@@ -37,6 +37,31 @@ type SizeOption = {
   price: string;
 };
 
+type Booking = {
+  id: string;
+  date?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  status?: string;
+};
+
+type MenuItem = {
+  id: string;
+  category?: string;
+  name?: string;
+  description?: string;
+  price?: string;
+  image_url?: string;
+  isExtra?: boolean | string;
+  sizes?: SizeOption[];
+};
+
+const getErrorInfo = (err: unknown) => {
+  const e = err as { code?: string; message?: string };
+  return { code: e?.code, message: e?.message };
+};
+
 export default function AdminPortal() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,8 +69,8 @@ export default function AdminPortal() {
   const [activeTab, setActiveTab] = useState("bookings");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -85,12 +110,12 @@ export default function AdminPortal() {
       orderBy("createdAt", "desc")
     );
     const unsubBookings = onSnapshot(qBookings, (snap) => {
-      setBookings(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setBookings(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Booking));
     });
 
     const qMenu = query(collection(db, "menu"));
     const unsubMenu = onSnapshot(qMenu, (snap) => {
-      setMenuItems(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setMenuItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MenuItem));
     });
 
     return () => {
@@ -99,9 +124,10 @@ export default function AdminPortal() {
     };
   }, [user]);
 
-  useEffect(() => {
+  const selectTab = (tab: string) => {
+    setActiveTab(tab);
     setIsMobileMenuOpen(false);
-  }, [activeTab]);
+  };
 
   // ---------- AUTH ----------
   const handleLogin = async (e: React.FormEvent) => {
@@ -110,14 +136,15 @@ export default function AdminPortal() {
     setError("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
+    } catch (err) {
+      const { code, message } = getErrorInfo(err);
       if (
-        err.code === "auth/invalid-credential" ||
-        err.code === "auth/wrong-password"
+        code === "auth/invalid-credential" ||
+        code === "auth/wrong-password"
       ) {
         setError("Falsche E-Mail oder Passwort.");
       } else {
-        setError(`Fehler: ${err.message}`);
+        setError(`Fehler: ${message}`);
       }
     } finally {
       setIsLoggingIn(false);
@@ -182,7 +209,7 @@ export default function AdminPortal() {
     }
   };
 
-  const handleEditClick = (item: any) => {
+  const handleEditClick = (item: MenuItem) => {
     setMenuForm({
       category: item.category || menuCategories[0],
       name: item.name || "",
@@ -253,9 +280,9 @@ export default function AdminPortal() {
 
       setBulkProgress("");
       alert(`Erfolgreich!`);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert("Fehler: " + (err.message || "Unbekannt"));
+      alert("Fehler: " + (getErrorInfo(err).message || "Unbekannt"));
     } finally {
       setIsBulkImporting(false);
       setBulkProgress("");
@@ -296,10 +323,11 @@ export default function AdminPortal() {
           </div>
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2 block">
+              <label htmlFor="admin-email" className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2 block">
                 E-Mail
               </label>
               <input
+                id="admin-email"
                 type="email"
                 required
                 value={email}
@@ -308,10 +336,11 @@ export default function AdminPortal() {
               />
             </div>
             <div>
-              <label className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2 block">
+              <label htmlFor="admin-password" className="text-xs uppercase tracking-widest text-[#a0a0a0] mb-2 block">
                 Passwort
               </label>
               <input
+                id="admin-password"
                 type="password"
                 required
                 value={password}
@@ -391,7 +420,7 @@ export default function AdminPortal() {
 
               <nav className="flex-1 p-4 space-y-1">
                 <button
-                  onClick={() => setActiveTab("bookings")}
+                  onClick={() => selectTab("bookings")}
                   className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${
                     activeTab === "bookings" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0]"
                   }`}
@@ -399,7 +428,7 @@ export default function AdminPortal() {
                   📅 Event Anfragen ({activeBookings.length})
                 </button>
                 <button
-                  onClick={() => setActiveTab("old_bookings")}
+                  onClick={() => selectTab("old_bookings")}
                   className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${
                     activeTab === "old_bookings" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0]"
                   }`}
@@ -407,7 +436,7 @@ export default function AdminPortal() {
                   📁 Vergangene Events ({oldBookings.length})
                 </button>
                 <button
-                  onClick={() => setActiveTab("menu")}
+                  onClick={() => selectTab("menu")}
                   className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${
                     activeTab === "menu" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0]"
                   }`}
@@ -447,7 +476,7 @@ export default function AdminPortal() {
 
         <nav className="flex-1 p-4 space-y-2">
           <button
-            onClick={() => setActiveTab("bookings")}
+            onClick={() => selectTab("bookings")}
             className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${
               activeTab === "bookings" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0] hover:bg-[#faf8f5]"
             }`}
@@ -455,7 +484,7 @@ export default function AdminPortal() {
             📅 Event Anfragen ({activeBookings.length})
           </button>
           <button
-            onClick={() => setActiveTab("old_bookings")}
+            onClick={() => selectTab("old_bookings")}
             className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${
               activeTab === "old_bookings" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0] hover:bg-[#faf8f5]"
             }`}
@@ -463,7 +492,7 @@ export default function AdminPortal() {
             📁 Vergangene Events ({oldBookings.length})
           </button>
           <button
-            onClick={() => setActiveTab("menu")}
+            onClick={() => selectTab("menu")}
             className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${
               activeTab === "menu" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0] hover:bg-[#faf8f5]"
             }`}
@@ -656,10 +685,11 @@ export default function AdminPortal() {
 
                 <form onSubmit={handleMenuSubmit} className="space-y-5">
                   <div>
-                    <label className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
+                    <label htmlFor="menu-category" className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
                       Kategorie
                     </label>
                     <select
+                      id="menu-category"
                       value={menuForm.category}
                       onChange={(e) =>
                         setMenuForm({ ...menuForm, category: e.target.value })
@@ -675,10 +705,11 @@ export default function AdminPortal() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
+                    <label htmlFor="menu-name" className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
                       Name
                     </label>
                     <input
+                      id="menu-name"
                       required
                       value={menuForm.name}
                       onChange={(e) =>
@@ -690,10 +721,11 @@ export default function AdminPortal() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
+                    <label htmlFor="menu-price" className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
                       Hauptpreis (€)
                     </label>
                     <input
+                      id="menu-price"
                       required
                       value={menuForm.price}
                       onChange={(e) =>
@@ -705,10 +737,11 @@ export default function AdminPortal() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
+                    <label htmlFor="menu-description" className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
                       Beschreibung
                     </label>
                     <textarea
+                      id="menu-description"
                       rows={2}
                       value={menuForm.description}
                       onChange={(e) =>
