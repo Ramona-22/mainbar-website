@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../lib/firebase";
-import { collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
+import nodemailer from "nodemailer";
 import { checkRateLimit } from "../../../lib/rateLimit";
 import { getClientIp } from "../../../lib/clientIp";
+import { EMAIL_PATTERN } from "../../../lib/bookingValidation";
+import { createDeletionToken } from "../../../lib/gdprToken";
+import { findBookingsByEmail, getGdprConfig, UNAVAILABLE_MESSAGE } from "./shared";
+
+// Step 1 of a deletion request: nothing is deleted here. If bookings exist for the
+// address, a signed confirmation link is mailed to it; only the mailbox owner can
+// complete the deletion via /daten-loeschen → /api/gdpr-delete/confirm.
+// The response is identical either way so the endpoint can't be used to probe
+// which addresses have bookings.
+const GENERIC_MESSAGE =
+  "Falls zu dieser E-Mail-Adresse Daten bei uns gespeichert sind, haben wir Ihnen einen Bestätigungslink gesendet. Bitte prüfen Sie Ihr Postfach.";
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +30,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const config = getGdprConfig();
+    if (!config) {
+      return NextResponse.json({ error: UNAVAILABLE_MESSAGE }, { status: 503 });
+    }
+
     let body: unknown;
     try {
       body = await request.json();
@@ -27,42 +42,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { email, type } = body as { email?: string; type?: "booking" | "review" | "all" };
-
-    if (!email || !type) {
-      return NextResponse.json(
-        { error: "Email and type (booking, review, or all) are required" },
-        { status: 400 }
-      );
+    const rawEmail = (body as { email?: unknown })?.email;
+    const email = typeof rawEmail === "string" ? rawEmail.trim() : "";
+    if (!email || email.length > 254 || !EMAIL_PATTERN.test(email)) {
+      return NextResponse.json({ error: "Bitte geben Sie eine gültige E-Mail-Adresse ein." }, { status: 400 });
     }
 
-    const deletedCounts: Record<string, number> = {};
-
-    if (type === "booking" || type === "all") {
-      const bookingsRef = collection(db, "bookings");
-      const q = query(bookingsRef, where("email", "==", email));
-      const snapshot = await getDocs(q);
-      
-      await Promise.all(
-        snapshot.docs.map((doc) => deleteDoc(doc.ref))
-      );
-      deletedCounts.bookings = snapshot.size;
+    const bookings = await findBookingsByEmail(config.db, email);
+    if (bookings.empty) {
+      return NextResponse.json({ success: true, message: GENERIC_MESSAGE });
     }
 
-    if (type === "review" || type === "all") {
-      const reviewsRef = collection(db, "reviews");
-      const q = query(reviewsRef, where("author", "==", email));
-      const snapshot = await getDocs(q);
-      
-      await Promise.all(
-        snapshot.docs.map((doc) => deleteDoc(doc.ref))
-      );
-      deletedCounts.reviews = snapshot.size;
-    }
+    const origin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || new URL(request.url).origin;
+    const link = `${origin}/daten-loeschen?token=${encodeURIComponent(createDeletionToken(email, config.secret))}`;
 
-    // Send confirmation email
-    const nodemailer = await import("nodemailer");
-    const transporter = nodemailer.default.createTransport({
+    const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.GMAIL_USER,
@@ -70,38 +64,24 @@ export async function POST(request: Request) {
       },
     });
 
-    const typeLabels: Record<string, string> = {
-      booking: "Event-Anfrage(n)",
-      review: "Bewertung(en)",
-      all: "alle Ihre Daten (Event-Anfragen und Bewertungen)",
-    };
-
     await transporter.sendMail({
       from: `"MainBar Datenschutz" <${process.env.GMAIL_USER}>`,
       to: email,
-      subject: "Bestätigung: Löschung Ihrer Daten",
+      subject: "Bitte bestätigen: Löschung Ihrer Daten",
       html: `
         <div style="font-family: sans-serif; color: #353941; padding: 20px;">
-          <h2>Ihre Daten wurden gelöscht</h2>
-          <p>Gemäß Art. 17 DSGVO (Recht auf Löschung) haben wir folgende Daten entfernt:</p>
-          <ul>
-            ${Object.entries(deletedCounts).map(([key, count]) => 
-              `<li><strong>${key}:</strong> ${count} Eintrag${count !== 1 ? "e" : ""} gelöscht</li>`
-            ).join("")}
-          </ul>
-          <p>Falls Sie weitere Fragen haben, kontaktieren Sie uns gerne unter info@mainbar-sw.de.</p>
+          <h2>Löschung Ihrer Daten bestätigen</h2>
+          <p>Wir haben eine Anfrage erhalten, Ihre bei MainBar gespeicherten Event-Anfragen zu löschen (Art. 17 DSGVO).</p>
+          <p><a href="${link}" style="display:inline-block;background:#353941;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;">Löschung bestätigen</a></p>
+          <p>Der Link ist 24 Stunden gültig. Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren – es wird nichts gelöscht.</p>
           <p><i>Ihr MainBar Team</i></p>
         </div>
       `,
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      deleted: deletedCounts,
-      message: `Erfolgreich gelöscht: ${typeLabels[type]}`
-    });
+    return NextResponse.json({ success: true, message: GENERIC_MESSAGE });
   } catch (error) {
-    console.error("GDPR delete error:", error);
+    console.error("GDPR delete request error:", error);
     return NextResponse.json({ error: "Failed to process deletion request" }, { status: 500 });
   }
 }

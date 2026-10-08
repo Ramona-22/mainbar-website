@@ -144,7 +144,9 @@ export default function DatenschutzPage() {
               Datenschutzaufsicht (Promenade 18, 91522 Ansbach).
             </p>
             <p className="text-[#4a4a4a] mt-2">
-              Zur Ausübung Ihrer Rechte (z. B. Löschung Ihrer Buchungsanfrage oder Bewertung)
+              Die Löschung Ihrer Event-Anfragen können Sie über den Link „Daten löschen“ im Footer
+              der Startseite beantragen; zur Bestätigung senden wir Ihnen einen Link an die
+              angegebene E-Mail-Adresse. Für alle anderen Anliegen (z. B. Löschung einer Bewertung)
               kontaktieren Sie uns bitte per E-Mail an info@mainbar-sw.de.
             </p>
           </section>

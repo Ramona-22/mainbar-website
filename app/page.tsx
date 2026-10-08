@@ -817,18 +817,14 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
             </button>
             <button 
               onClick={() => {
-                const email = prompt("Bitte geben Sie Ihre E-Mail-Adresse ein, um einen Löschantrag zu stellen:");
+                const email = prompt("Bitte geben Sie die E-Mail-Adresse Ihrer Event-Anfrage ein. Wir senden Ihnen einen Link, um die Löschung zu bestätigen:");
                 if (email) {
                   fetch("/api/gdpr-delete", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, type: "all" })
+                    body: JSON.stringify({ email })
                   }).then(res => res.json()).then(data => {
-                    if (data.success) {
-                      alert(data.message || "Ihre Daten wurden erfolgreich gelöscht.");
-                    } else {
-                      alert(data.error || "Fehler beim Löschen der Daten.");
-                    }
+                    alert(data.success ? data.message : (data.error || "Fehler bei der Anfrage."));
                   }).catch(() => alert("Fehler bei der Anfrage."));
                 }
               }}

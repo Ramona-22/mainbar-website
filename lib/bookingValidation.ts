@@ -13,7 +13,7 @@ export type BookingValidationResult =
   | { valid: false; error: string };
 
 const SEATING_OPTIONS = new Set(["inside", "outside", "catering"]);
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT_LENGTH = 200;
 
 function isNonEmptyString(value: unknown, maxLength = MAX_TEXT_LENGTH): value is string {
