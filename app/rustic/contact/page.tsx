@@ -2,10 +2,15 @@
 
 import Link from 'next/link';
 import { useLanguage } from '../../context/LanguageContext';
+import { useCookieConsent } from '../../context/CookieConsentContext';
+import { useState } from 'react';
 
 export default function RusticContact() {
   const { lang } = useLanguage();
-  
+  const { consent } = useCookieConsent();
+  const [mapRequested, setMapRequested] = useState(false);
+  const showMap = mapRequested || !!consent?.functional;
+
   const t = {
     title: lang === 'de' ? 'Komm Vorbei' : 'Visit Us',
     subtitle: lang === 'de' ? 'Wir freuen uns auf dich' : 'We look forward to seeing you',
@@ -74,6 +79,7 @@ export default function RusticContact() {
 
           {/* Perfectly Pinned Google Map Embed */}
           <div className="relative h-full min-h-[420px] rounded-3xl overflow-hidden shadow-md border border-[#E8E0D5] bg-white">
+             {showMap ? (
              <iframe 
                title="MainBar Location Map"
                src="https://maps.google.com/maps?q=Spitalstrasse%2019,%2097421%20Schweinfurt&t=&z=16&ie=UTF8&iwloc=&output=embed"
@@ -84,6 +90,23 @@ export default function RusticContact() {
                loading="lazy" 
                referrerPolicy="no-referrer-when-downgrade"
              ></iframe>
+             ) : (
+               <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-[#F9F6F0]">
+                 <p className="text-lg text-[#5C4033] mb-2">Karte wird nicht angezeigt</p>
+                 <p className="text-sm text-[#5C4033/70] mb-4 max-w-xs">
+                   Für die Anzeige von Google Maps benötigen wir Ihre Einwilligung in funktionale Cookies.
+                 </p>
+                 <button
+                   onClick={() => setMapRequested(true)}
+                   className="text-[#C07F67] font-bold uppercase tracking-widest text-xs border-b border-transparent hover:border-[#C07F67] transition-colors"
+                 >
+                   Karte laden &amp; Einwilligen
+                 </button>
+                 <p className="text-xs text-[#5C4033/70] mt-4 max-w-xs">
+                   Dabei werden Daten an Google übermittelt. Mehr in der <a href="/datenschutz" className="underline">Datenschutzerklärung</a>.
+                 </p>
+               </div>
+             )}
           </div>
           
         </div>

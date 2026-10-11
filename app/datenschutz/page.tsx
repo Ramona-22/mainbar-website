@@ -39,6 +39,13 @@ export default function DatenschutzPage() {
               Mit Vercel wurde ein Auftragsverarbeitungsvertrag (AVV) geschlossen. Die Datenübertragung
               in die USA erfolgt auf Basis von Standardvertragsklauseln.
             </p>
+            <p className="text-[#4a4a4a] mt-3">
+              Zum Schutz vor Missbrauch (z. B. massenhaft versendete Anfragen) wird beim Absenden des
+              Buchungsformulars oder eines Löschantrags Ihre IP-Adresse an unseren Dienstleister
+              Upstash, Inc. (Redis-Datenbank) übermittelt und dort nur kurzzeitig, höchstens ca.
+              20 Minuten, gespeichert, um die Anzahl der Anfragen zu begrenzen. Rechtsgrundlage ist
+              unser berechtigtes Interesse an der Sicherheit der Website (Art. 6 Abs. 1 lit. f DSGVO).
+            </p>
           </section>
 
           <section>
@@ -79,14 +86,13 @@ export default function DatenschutzPage() {
               <li><strong>Essenzielle Cookies (immer aktiv):</strong> Notwendig für den Betrieb der Website
                 (z. B. Spracheinstellung, Sitzung, Cookie-Consent-Status). Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</li>
               <li><strong>Funktionale Cookies (nach Einwilligung):</strong> Ermöglichen erweiterte Funktionen
-                wie Google Maps (Kartenansicht auf der Kontaktseite), eingebettete Videos und Google Fonts.
+                wie Google Maps (Kartenansicht auf der Kontaktseite).
                 Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).</li>
-              <li><strong>Analytics Cookies (nach Einwilligung):</strong> Firebase Analytics zur pseudonymisierten
-                Nutzungsanalyse. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).</li>
+              <li><strong>Analytics Cookies:</strong> Werden aktuell nicht eingesetzt.</li>
               <li><strong>Marketing Cookies:</strong> Werden aktuell nicht eingesetzt.</li>
             </ul>
             <p className="text-[#4a4a4a] mt-2">
-              Ihre Einwilligung wird in einem LocalStorage-Cookie (cookie-consent) für 12 Monate gespeichert.
+              Ihre Einwilligung wird im Local Storage Ihres Browsers (cookie-consent) für 12 Monate gespeichert.
               Sie können Ihre Einstellungen jederzeit über den Link „Cookie-Einstellungen“ im Footer widerrufen
               oder anpassen.
             </p>
@@ -142,6 +148,23 @@ export default function DatenschutzPage() {
               Daten (Art. 15–21 DSGVO). Zudem haben Sie das Recht, sich bei einer
               Datenschutz-Aufsichtsbehörde zu beschweren, z. B. beim Bayerischen Landesamt für
               Datenschutzaufsicht (Promenade 18, 91522 Ansbach).
+            </p>
+            <p className="text-[#4a4a4a] mt-3">
+              <strong>Widerruf Ihrer Einwilligung:</strong> Eine erteilte Einwilligung können Sie
+              jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3 DSGVO), z. B. per E-Mail
+              oder für Cookies über „Cookie-Einstellungen“ im Footer. Die Rechtmäßigkeit der bis zum
+              Widerruf erfolgten Verarbeitung bleibt unberührt.
+            </p>
+            <p className="text-[#4a4a4a] mt-3">
+              <strong>Widerspruchsrecht:</strong> Soweit wir Daten auf Grundlage berechtigter
+              Interessen (Art. 6 Abs. 1 lit. f DSGVO) verarbeiten, können Sie aus Gründen, die sich
+              aus Ihrer besonderen Situation ergeben, jederzeit Widerspruch einlegen (Art. 21 DSGVO).
+            </p>
+            <p className="text-[#4a4a4a] mt-3">
+              Die Angabe Ihrer Daten im Buchungs- oder Bewertungsformular ist freiwillig; ohne sie
+              können wir Ihre Anfrage jedoch nicht bearbeiten bzw. Ihre Bewertung nicht
+              veröffentlichen. Eine automatisierte Entscheidungsfindung einschließlich Profiling
+              findet nicht statt.
             </p>
             <p className="text-[#4a4a4a] mt-2">
               Zur Ausübung Ihrer Rechte (z. B. Löschung Ihrer Buchungsanfrage oder Bewertung)

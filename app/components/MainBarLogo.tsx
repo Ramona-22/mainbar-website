@@ -19,7 +19,7 @@ export default function MainBarLogo({
       {/* Cursive "MainBar" - Fluid Typography */}
       <h1 
         className={`relative z-10 text-6xl sm:text-7xl md:text-8xl font-normal tracking-wide ${textColor} drop-shadow-sm leading-none`} 
-        style={{ fontFamily: "'Great Vibes', cursive" }}
+        style={{ fontFamily: "var(--font-great-vibes), cursive" }}
       >
         MainBar
       </h1>
