@@ -11,12 +11,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const greatVibes = Great_Vibes({ weight: "400", subsets: ["latin"], variable: "--font-great-vibes" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
-// Strict mobile viewport settings to prevent accidental zooming on iOS/Android
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#fcfbf9" },
     { media: "(prefers-color-scheme: dark)", color: "#1a161d" }

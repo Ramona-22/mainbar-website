@@ -36,7 +36,7 @@ export default function ModernGallery() {
       {/* Massive subtle background text in Slate Purple */}
       <div 
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] select-none pointer-events-none -rotate-12 -z-10 w-[150vw] text-center text-[#7a6c82]"
-        style={{ fontFamily: "'Great Vibes', cursive", fontSize: 'clamp(20rem, 40vw, 50rem)', whiteSpace: 'nowrap' }}
+        style={{ fontFamily: "var(--font-great-vibes), cursive", fontSize: 'clamp(20rem, 40vw, 50rem)', whiteSpace: 'nowrap' }}
       >
         MainBar
       </div>
