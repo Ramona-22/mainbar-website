@@ -16,7 +16,6 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  getDocs,
 } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,8 +42,30 @@ type Booking = {
   email?: string;
   phone?: string;
   city?: string;
+  state?: string;
+  guests?: number | string;
+  seating?: string;
   status?: string;
 };
+
+type Review = {
+  id: string;
+  author?: string;
+  text?: string;
+  rating?: number;
+  approved?: boolean;
+  createdAt?: string | { toDate: () => Date };
+};
+
+const SEATING_LABELS: Record<string, string> = {
+  inside: "Innen",
+  outside: "Außen",
+  catering: "Catering",
+};
+
+// Older bookings were saved as "pending"; show them as "Neu".
+const normalizeStatus = (status?: string) =>
+  !status || status === "pending" ? "Neu" : status;
 
 type MenuItem = {
   id: string;
@@ -71,6 +92,7 @@ export default function AdminPortal() {
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -83,9 +105,6 @@ export default function AdminPortal() {
     isExtra: false,
     sizes: [] as SizeOption[],
   });
-
-  const [isBulkImporting, setIsBulkImporting] = useState(false);
-  const [bulkProgress, setBulkProgress] = useState("");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -118,9 +137,15 @@ export default function AdminPortal() {
       setMenuItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MenuItem));
     });
 
+    const qReviews = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
+    const unsubReviews = onSnapshot(qReviews, (snap) => {
+      setReviews(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review));
+    });
+
     return () => {
       unsubBookings();
       unsubMenu();
+      unsubReviews();
     };
   }, [user]);
 
@@ -163,6 +188,37 @@ export default function AdminPortal() {
     } catch (err) {
       console.error(err);
       alert("Fehler beim Aktualisieren des Status.");
+    }
+  };
+
+  // Used for spam cleanup and GDPR deletion requests (Art. 17 DSGVO).
+  const handleDeleteBooking = async (id: string) => {
+    if (!window.confirm("Diese Anfrage endgültig löschen?")) return;
+    try {
+      await deleteDoc(doc(db, "bookings", id));
+    } catch (err) {
+      console.error(err);
+      alert("Fehler beim Löschen.");
+    }
+  };
+
+  // ---------- REVIEWS ----------
+  const handleToggleReview = async (id: string, approved: boolean) => {
+    try {
+      await updateDoc(doc(db, "reviews", id), { approved });
+    } catch (err) {
+      console.error(err);
+      alert("Fehler beim Aktualisieren der Bewertung.");
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!window.confirm("Diese Bewertung endgültig löschen?")) return;
+    try {
+      await deleteDoc(doc(db, "reviews", id));
+    } catch (err) {
+      console.error(err);
+      alert("Fehler beim Löschen.");
     }
   };
 
@@ -256,39 +312,6 @@ export default function AdminPortal() {
     }));
   };
 
-  // ---------- BULK REPLACE ----------
-  const handleBulkReplaceMenu = async () => {
-    if (
-      !confirm(
-        "ACHTUNG!\n\nAlle bestehenden Menü-Einträge werden gelöscht und durch das neue Menü ersetzt.\n\nWirklich fortfahren?"
-      )
-    )
-      return;
-
-    setIsBulkImporting(true);
-    setBulkProgress("Lösche alte Einträge...");
-
-    try {
-      const snapshot = await getDocs(collection(db, "menu"));
-      await Promise.all(
-        snapshot.docs.map((d) => deleteDoc(doc(db, "menu", d.id)))
-      );
-
-      setBulkProgress(
-        `Alte Einträge gelöscht (${snapshot.size}). Füge neue hinzu...`
-      );
-
-      setBulkProgress("");
-      alert(`Erfolgreich!`);
-    } catch (err) {
-      console.error(err);
-      alert("Fehler: " + (getErrorInfo(err).message || "Unbekannt"));
-    } finally {
-      setIsBulkImporting(false);
-      setBulkProgress("");
-    }
-  };
-
   // ---------- RENDER ----------
   if (loading) {
     return (
@@ -314,7 +337,7 @@ export default function AdminPortal() {
           className="w-full max-w-md bg-white p-8 sm:p-10 rounded-3xl shadow-2xl"
         >
           <div className="text-center mb-8">
-            <h1 className="font-(family-name:--font-script)-5xl text-[#cda1b1] mb-2">
+            <h1 className="font-(family-name:--font-great-vibes) text-5xl text-[#cda1b1] mb-2">
               MainBar
             </h1>
             <h2 className="text-[#a0a0a0] uppercase tracking-widest text-xs font-bold">
@@ -380,7 +403,7 @@ export default function AdminPortal() {
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
-          <h1 className="font-(family-name:--font-script) text-2xl text-[#cda1b1]">
+          <h1 className="font-(family-name:--font-great-vibes) text-2xl text-[#cda1b1]">
             MainBar
           </h1>
         </div>
@@ -410,7 +433,7 @@ export default function AdminPortal() {
               className="fixed top-0 left-0 bottom-0 z-50 w-72 bg-white shadow-2xl flex flex-col md:hidden"
             >
               <div className="p-6 border-b flex justify-between items-center">
-                <h1 className="font-(family-name:--font-script) text-3xl text-[#cda1b1]">
+                <h1 className="font-(family-name:--font-great-vibes) text-3xl text-[#cda1b1]">
                   MainBar
                 </h1>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="text-2xl">
@@ -443,6 +466,14 @@ export default function AdminPortal() {
                 >
                   🍽️ Menü Manager
                 </button>
+                <button
+                  onClick={() => selectTab("reviews")}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${
+                    activeTab === "reviews" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0]"
+                  }`}
+                >
+                  ⭐ Bewertungen ({reviews.filter((r) => !r.approved).length} neu)
+                </button>
               </nav>
 
               <div className="p-4 border-t space-y-1">
@@ -469,7 +500,7 @@ export default function AdminPortal() {
            the viewport regardless of how tall the main content grows ===== */}
       <aside className="w-64 bg-white border-r border-gray-100 hidden md:flex md:flex-col md:h-screen md:sticky md:top-0 md:overflow-y-auto">
         <div className="p-8 border-b">
-          <h1 className="font-(family-name:--font-script) text-3xl text-[#cda1b1]">
+          <h1 className="font-(family-name:--font-great-vibes) text-3xl text-[#cda1b1]">
             MainBar
           </h1>
         </div>
@@ -499,6 +530,14 @@ export default function AdminPortal() {
           >
             🍽️ Menü Manager
           </button>
+          <button
+            onClick={() => selectTab("reviews")}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${
+              activeTab === "reviews" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0] hover:bg-[#faf8f5]"
+            }`}
+          >
+            ⭐ Bewertungen ({reviews.filter((r) => !r.approved).length} neu)
+          </button>
         </nav>
 
         <div className="p-4 border-t space-y-2">
@@ -524,6 +563,7 @@ export default function AdminPortal() {
             {activeTab === "bookings" && "Aktuelle Event Anfragen"}
             {activeTab === "old_bookings" && "Vergangene Events"}
             {activeTab === "menu" && "Menü Manager"}
+            {activeTab === "reviews" && "Bewertungen"}
           </h2>
           <span className="hidden md:inline text-xs text-[#a0a0a0] bg-white px-4 py-2 rounded-full shadow-sm">
             {user.email}
@@ -541,7 +581,8 @@ export default function AdminPortal() {
                 <div key={b.id} className="bg-white rounded-2xl p-5 border border-gray-100">
                   <div className="flex flex-wrap gap-3 mb-3">
                     <select
-                      value={b.status || "Neu"}
+                      aria-label="Status"
+                      value={normalizeStatus(b.status)}
                       onChange={(e) => handleStatusChange(b.id, e.target.value)}
                       className="px-3 py-1.5 rounded-full text-xs font-bold border-0 bg-amber-100 text-amber-700"
                     >
@@ -554,7 +595,18 @@ export default function AdminPortal() {
                     </span>
                   </div>
                   <p className="font-bold text-[#2d2d2d]">{b.email}</p>
-                  <p className="text-sm text-[#a0a0a0]">📞 {b.phone} · 📍 {b.city}</p>
+                  <p className="text-sm text-[#a0a0a0]">
+                    👥 {b.guests ?? "?"} Personen · {SEATING_LABELS[b.seating ?? ""] ?? b.seating ?? "–"}
+                  </p>
+                  <p className="text-sm text-[#a0a0a0]">
+                    📞 {b.phone} · 📍 {[b.city, b.state].filter(Boolean).join(", ")}
+                  </p>
+                  <button
+                    onClick={() => handleDeleteBooking(b.id)}
+                    className="mt-3 text-red-500 text-xs font-bold uppercase tracking-widest"
+                  >
+                    Löschen
+                  </button>
                 </div>
               ))
             )}
@@ -574,6 +626,61 @@ export default function AdminPortal() {
                   <p className="text-sm text-[#a0a0a0]">
                     📅 {b.date ? new Date(b.date).toLocaleDateString("de-DE") : "Kein Datum"}
                   </p>
+                  <button
+                    onClick={() => handleDeleteBooking(b.id)}
+                    className="mt-3 text-red-500 text-xs font-bold uppercase tracking-widest"
+                  >
+                    Löschen
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === "reviews" && (
+          <div className="space-y-4">
+            {reviews.length === 0 ? (
+              <div className="bg-white rounded-2xl p-12 text-center text-[#a0a0a0]">
+                Noch keine Bewertungen.
+              </div>
+            ) : (
+              reviews.map((r) => (
+                <div key={r.id} className="bg-white rounded-2xl p-5 border border-gray-100">
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        r.approved ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {r.approved ? "Öffentlich" : "Wartet auf Freigabe"}
+                    </span>
+                    <span className="font-bold text-[#2d2d2d]">{r.author || "Anonym"}</span>
+                    <span className="text-sm text-[#cda1b1]" aria-label={`${r.rating ?? 0} von 5 Sternen`}>
+                      {"★".repeat(Math.max(0, Math.min(5, Number(r.rating) || 0)))}
+                    </span>
+                    {r.createdAt && (
+                      <span className="text-xs text-[#a0a0a0]">
+                        {(typeof r.createdAt === "string"
+                          ? new Date(r.createdAt)
+                          : r.createdAt.toDate()
+                        ).toLocaleDateString("de-DE")}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-[#555] whitespace-pre-line">{r.text}</p>
+                  <button
+                    onClick={() => handleToggleReview(r.id, !r.approved)}
+                    className="mt-3 mr-6 text-green-700 text-xs font-bold uppercase tracking-widest"
+                  >
+                    {r.approved ? "Verbergen" : "Freigeben"}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteReview(r.id)}
+                    className="mt-3 text-red-500 text-xs font-bold uppercase tracking-widest"
+                  >
+                    Löschen
+                  </button>
                 </div>
               ))
             )}
@@ -586,17 +693,6 @@ export default function AdminPortal() {
               <p className="text-[#a0a0a0] text-sm">Speisekarte verwalten (inkl. Größen)</p>
               <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={handleBulkReplaceMenu}
-                  disabled={isBulkImporting}
-                  className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest ${
-                    isBulkImporting
-                      ? "bg-gray-400 text-white cursor-not-allowed"
-                      : "bg-[#2d2d2d] text-white hover:bg-[#cda1b1]"
-                  }`}
-                >
-                  {isBulkImporting ? "Importiere..." : "Komplettes Menü ersetzen"}
-                </button>
-                <button
                   onClick={() => {
                     resetMenuForm();
                     setIsMenuModalOpen(true);
@@ -607,12 +703,6 @@ export default function AdminPortal() {
                 </button>
               </div>
             </div>
-
-            {bulkProgress && (
-              <div className="mb-6 bg-[#cda1b1]/10 border border-[#cda1b1]/30 rounded-2xl px-5 py-3 text-sm">
-                {bulkProgress}
-              </div>
-            )}
 
             {menuItems.length === 0 ? (
               <div className="bg-white rounded-2xl p-12 text-center text-[#a0a0a0]">

@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { checkRateLimit } from "./rateLimit";
 
-describe("checkRateLimit", () => {
-  it("fails open (allows the request) when Upstash env vars are not configured", async () => {
-    // In this test environment UPSTASH_REDIS_REST_URL/TOKEN are unset, matching
-    // local dev before Upstash is provisioned. Production must set them for the
-    // sliding-window limit to actually apply — see lib/rateLimit.ts.
-    const result = await checkRateLimit("test-client");
-    expect(result.allowed).toBe(true);
+describe("checkRateLimit (in-memory fallback, Upstash not configured)", () => {
+  it("allows the first 5 booking requests per client, then blocks", async () => {
+    for (let i = 0; i < 5; i++) {
+      expect((await checkRateLimit("client-a")).allowed).toBe(true);
+    }
+    const blocked = await checkRateLimit("client-a");
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
+  });
+
+  it("counts clients and endpoints separately", async () => {
+    expect((await checkRateLimit("client-b")).allowed).toBe(true);
+    expect((await checkRateLimit("client-a", "gdpr-delete")).allowed).toBe(true);
   });
 });

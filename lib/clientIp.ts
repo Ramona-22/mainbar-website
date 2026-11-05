@@ -10,3 +10,8 @@ export function getClientIp(request: Request): string {
 
   return "unknown";
 }
+
+export function isJsonRequest(request: Request): boolean {
+  const contentType = request.headers.get("content-type") ?? "";
+  return contentType.split(";")[0].trim().toLowerCase() === "application/json";
+}
