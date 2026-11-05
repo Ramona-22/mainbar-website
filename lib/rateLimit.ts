@@ -16,6 +16,29 @@ const MAX_REQUESTS = 5;
 const GDPR_WINDOW = "10 m";
 const GDPR_MAX_REQUESTS = 2;
 
+// Fallback when Upstash is not configured: a per-server-instance memory
+// window. Weaker than Redis (each serverless instance counts separately) but
+// far better than no limit at all.
+const memoryHits = new Map<string, number[]>();
+const WINDOW_MS = 10 * 60 * 1000;
+
+function checkMemoryLimit(key: string, max: number): RateLimitResult {
+  const now = Date.now();
+  const hits = (memoryHits.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
+  if (hits.length >= max) {
+    memoryHits.set(key, hits);
+    return { allowed: false, retryAfterSeconds: Math.ceil((hits[0] + WINDOW_MS - now) / 1000) };
+  }
+  hits.push(now);
+  memoryHits.set(key, hits);
+  if (memoryHits.size > 10_000) {
+    // Drop the oldest key so the map cannot grow without bound.
+    const oldest = memoryHits.keys().next().value;
+    if (oldest !== undefined) memoryHits.delete(oldest);
+  }
+  return { allowed: true };
+}
+
 let ratelimit: Ratelimit | null = null;
 let gdprRatelimit: Ratelimit | null = null;
 let warnedMissingConfig = false;
@@ -29,7 +52,7 @@ function getRatelimit(): Ratelimit | null {
   if (!url || !token) {
     if (!warnedMissingConfig) {
       console.warn(
-        "[rateLimit] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not set — rate limiting is DISABLED. " +
+        "[rateLimit] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not set — using a per-instance in-memory limit only. " +
           "Set them in production so /api/booking is actually protected against abuse."
       );
       warnedMissingConfig = true;
@@ -69,8 +92,8 @@ export async function checkRateLimit(
 ): Promise<RateLimitResult> {
   const limiter = endpoint === "gdpr-delete" ? getGdprRatelimit() : getRatelimit();
   if (!limiter) {
-    // Fail open when not configured (e.g. local dev) rather than blocking real usage.
-    return { allowed: true };
+    const max = endpoint === "gdpr-delete" ? GDPR_MAX_REQUESTS : MAX_REQUESTS;
+    return checkMemoryLimit(`${endpoint}:${identifier}`, max);
   }
 
   const result = await limiter.limit(identifier);

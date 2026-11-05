@@ -37,21 +37,29 @@ export default function BookingPage() {
     setIsSubmitting(true);
 
     try {
-      // 1. Save booking to Firestore for Admin Dashboard
-      await addDoc(collection(db, "bookings"), {
-        ...formData,
-        status: "pending",
-        createdAt: serverTimestamp()
-      });
+      const payload = { ...formData, guests: Number(formData.guests) };
 
-      // 2. Trigger Emails via local API route (Nodemailer)
+      // 1. Server validates, rate-limits and sends the emails first, so
+      //    rejected or spammy submissions never reach the database.
       const res = await fetch("/api/booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error("Failed to send notification emails");
+
+      // 2. Save for the admin dashboard. The owner already has the email,
+      //    so a failure here should not show the customer an error.
+      try {
+        await addDoc(collection(db, "bookings"), {
+          ...payload,
+          status: "Neu",
+          createdAt: serverTimestamp(),
+        });
+      } catch (dbError) {
+        console.error("Booking saved by email only:", dbError);
+      }
 
       setIsSuccess(true);
     } catch (error) {

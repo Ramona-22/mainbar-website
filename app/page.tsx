@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, animate } from "framer-motion";
-import { collection, onSnapshot, query, addDoc, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query, addDoc, orderBy, limit, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 const menuCategories = [
@@ -246,16 +246,28 @@ export default function UnifiedHomePage() {
   }, []);
 
   useEffect(() => {
-    const qReviews = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
+    const qReviews = query(collection(db, "reviews"), orderBy("createdAt", "desc"), limit(50));
     const unsubReviews = onSnapshot(qReviews, (snapshot) => {
       const fetchedReviews = snapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
-        .filter((r) => r.rating >= 3);
+        // Guard against malformed docs: "☆".repeat() throws on a rating
+        // outside 0-5, which would crash the whole page.
+        .filter(
+          (r) =>
+            Number.isInteger(r.rating) &&
+            r.rating >= 3 &&
+            r.rating <= 5 &&
+            typeof r.text === "string" &&
+            typeof r.author === "string"
+        );
       if (fetchedReviews.length > 0) {
         setReviews(shuffleArray(fetchedReviews));
       } else {
         setReviews(shuffleArray(fallbackReviews));
       }
+    }, (error) => {
+      console.error("Reviews could not be loaded:", error);
+      setReviews(shuffleArray(fallbackReviews));
     });
     return () => unsubReviews();
   }, []);
@@ -311,7 +323,7 @@ export default function UnifiedHomePage() {
         author: reviewForm.author,
         text: reviewForm.text,
         rating: reviewForm.rating,
-        createdAt: new Date().toISOString()
+        createdAt: serverTimestamp()
       });
       setIsReviewFormOpen(false);
       setReviewForm({ author: "", text: "", rating: 5 });
@@ -392,9 +404,11 @@ export default function UnifiedHomePage() {
                   <input
                     type="text"
                     required
+                    maxLength={80}
+                    aria-label="Dein Vorname"
                     value={reviewForm.author}
                     onChange={(e) => setReviewForm({ ...reviewForm, author: e.target.value })}
-                    className="border-b border-gray-200 py-1.5 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] text-xs"
+                    className="border-b border-gray-200 py-1.5 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] text-base md:text-xs"
                     placeholder="Dein Vorname"
                   />
                 </div>
@@ -403,9 +417,11 @@ export default function UnifiedHomePage() {
                   <textarea
                     rows={3}
                     required
+                    maxLength={1000}
+                    aria-label="Deine Bewertung"
                     value={reviewForm.text}
                     onChange={(e) => setReviewForm({ ...reviewForm, text: e.target.value })}
-                    className="border-b border-gray-200 py-1.5 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] text-xs resize-none"
+                    className="border-b border-gray-200 py-1.5 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] text-base md:text-xs resize-none"
                     placeholder="Deine Bewertung"
                   />
                 </div>

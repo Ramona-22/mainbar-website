@@ -15,6 +15,21 @@ export type BookingValidationResult =
 const SEATING_OPTIONS = new Set(["inside", "outside", "catering"]);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEXT_LENGTH = 200;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Event date from <input type="date">: YYYY-MM-DD, a real calendar day, from
+// yesterday (timezone slack) up to two years ahead.
+export function isValidEventDate(value: string, now = Date.now()): boolean {
+  if (!ISO_DATE_PATTERN.test(value)) return false;
+  const time = Date.parse(`${value}T00:00:00Z`);
+  if (Number.isNaN(time) || new Date(time).toISOString().slice(0, 10) !== value) return false;
+  return time >= now - 2 * DAY_MS && time <= now + 730 * DAY_MS;
+}
+
+export function isValidEmail(value: string): boolean {
+  return value.length <= MAX_TEXT_LENGTH && EMAIL_PATTERN.test(value);
+}
 
 function isNonEmptyString(value: unknown, maxLength = MAX_TEXT_LENGTH): value is string {
   return typeof value === "string" && value.trim().length > 0 && value.length <= maxLength;
@@ -36,7 +51,7 @@ export function validateBooking(input: unknown): BookingValidationResult {
     return { valid: false, error: "Guests must be an integer between 1 and 30" };
   }
 
-  if (!isNonEmptyString(data.date) || Number.isNaN(Date.parse(data.date as string))) {
+  if (typeof data.date !== "string" || !isValidEventDate(data.date.trim())) {
     return { valid: false, error: "Invalid date" };
   }
 

@@ -4,7 +4,7 @@ import { escapeHtml, validateBooking } from "./bookingValidation";
 const validPayload = {
   seating: "inside",
   guests: 4,
-  date: "2026-09-01",
+  date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
   state: "Bayern",
   city: "Schweinfurt",
   phone: "+49 170 2278096",
@@ -52,6 +52,12 @@ describe("validateBooking", () => {
   it("rejects a non-integer guest count", () => {
     const result = validateBooking({ ...validPayload, guests: 2.5 });
     expect(result.valid).toBe(false);
+  });
+
+  it("rejects past, impossible and non-ISO dates", () => {
+    for (const date of ["2020-01-01", "2030-02-31", "01.09.2030", "2030-09-01\r\nBcc: x@y.z"]) {
+      expect(validateBooking({ ...validPayload, date }).valid).toBe(false);
+    }
   });
 
   it("rejects an invalid date", () => {

@@ -1,0 +1,79 @@
+rules_version = '2';
+
+// Firestore security rules for the MainBar website.
+//
+// The Firebase API key is public (it ships to every browser), so these rules
+// are the ONLY thing protecting customer data. Deploy them with:
+//   npx firebase-tools deploy --only firestore:rules --project <project-id>
+// or paste this file into Firebase console > Firestore > Rules.
+//
+// Admins: a signed-in user counts as admin only if a document exists at
+// admins/{their uid}. Create it once in the Firebase console
+// (Firestore > admins > Add document, Document ID = the UID shown under
+// Authentication > Users). Being signed in alone is NOT enough, because anyone
+// can create a Firebase account with the public API key.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function shortString(v, max) {
+      return v is string && v.size() > 0 && v.size() <= max;
+    }
+
+    // Event / catering requests: public can create, only admins can see them.
+    match /bookings/{id} {
+      allow read, delete: if isAdmin();
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow create: if
+        request.resource.data.keys().hasOnly(
+          ['seating', 'guests', 'date', 'state', 'city', 'phone', 'email', 'status', 'createdAt'])
+        && request.resource.data.seating in ['inside', 'outside', 'catering']
+        && request.resource.data.guests is int
+        && request.resource.data.guests >= 1 && request.resource.data.guests <= 30
+        && shortString(request.resource.data.date, 40)
+        && shortString(request.resource.data.state, 200)
+        && shortString(request.resource.data.city, 200)
+        && shortString(request.resource.data.phone, 40)
+        && shortString(request.resource.data.email, 200)
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && request.resource.data.status == 'Neu'
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // Guest reviews: shown publicly, anyone can add one, admins moderate.
+    match /reviews/{id} {
+      allow read: if true;
+      allow delete: if isAdmin();
+      allow update: if false;
+      allow create: if
+        request.resource.data.keys().hasOnly(['author', 'text', 'rating', 'createdAt'])
+        && shortString(request.resource.data.author, 80)
+        && shortString(request.resource.data.text, 1000)
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // Menu: public read, admin write.
+    match /menu/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Admin allow-list: managed only in the Firebase console.
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
