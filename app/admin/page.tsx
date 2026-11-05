@@ -53,6 +53,7 @@ type Review = {
   author?: string;
   text?: string;
   rating?: number;
+  approved?: boolean;
   createdAt?: string | { toDate: () => Date };
 };
 
@@ -202,6 +203,15 @@ export default function AdminPortal() {
   };
 
   // ---------- REVIEWS ----------
+  const handleToggleReview = async (id: string, approved: boolean) => {
+    try {
+      await updateDoc(doc(db, "reviews", id), { approved });
+    } catch (err) {
+      console.error(err);
+      alert("Fehler beim Aktualisieren der Bewertung.");
+    }
+  };
+
   const handleDeleteReview = async (id: string) => {
     if (!window.confirm("Diese Bewertung endgültig löschen?")) return;
     try {
@@ -462,7 +472,7 @@ export default function AdminPortal() {
                     activeTab === "reviews" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0]"
                   }`}
                 >
-                  ⭐ Bewertungen ({reviews.length})
+                  ⭐ Bewertungen ({reviews.filter((r) => !r.approved).length} neu)
                 </button>
               </nav>
 
@@ -526,7 +536,7 @@ export default function AdminPortal() {
               activeTab === "reviews" ? "bg-[#faf8f5] text-[#2d2d2d]" : "text-[#a0a0a0] hover:bg-[#faf8f5]"
             }`}
           >
-            ⭐ Bewertungen ({reviews.length})
+            ⭐ Bewertungen ({reviews.filter((r) => !r.approved).length} neu)
           </button>
         </nav>
 
@@ -638,6 +648,13 @@ export default function AdminPortal() {
               reviews.map((r) => (
                 <div key={r.id} className="bg-white rounded-2xl p-5 border border-gray-100">
                   <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        r.approved ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {r.approved ? "Öffentlich" : "Wartet auf Freigabe"}
+                    </span>
                     <span className="font-bold text-[#2d2d2d]">{r.author || "Anonym"}</span>
                     <span className="text-sm text-[#cda1b1]" aria-label={`${r.rating ?? 0} von 5 Sternen`}>
                       {"★".repeat(Math.max(0, Math.min(5, Number(r.rating) || 0)))}
@@ -652,6 +669,12 @@ export default function AdminPortal() {
                     )}
                   </div>
                   <p className="text-sm text-[#555] whitespace-pre-line">{r.text}</p>
+                  <button
+                    onClick={() => handleToggleReview(r.id, !r.approved)}
+                    className="mt-3 mr-6 text-green-700 text-xs font-bold uppercase tracking-widest"
+                  >
+                    {r.approved ? "Verbergen" : "Freigeben"}
+                  </button>
                   <button
                     onClick={() => handleDeleteReview(r.id)}
                     className="mt-3 text-red-500 text-xs font-bold uppercase tracking-widest"

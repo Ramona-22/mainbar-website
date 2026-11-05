@@ -45,13 +45,17 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
     }
 
-    // Guest reviews: shown publicly, anyone can add one, admins moderate.
+    // Guest reviews: anyone can submit one, but it is only public after an
+    // admin approves it in /admin.
     match /reviews/{id} {
-      allow read: if true;
+      allow read: if resource.data.approved == true || isAdmin();
       allow delete: if isAdmin();
-      allow update: if false;
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['approved'])
+        && request.resource.data.approved is bool;
       allow create: if
-        request.resource.data.keys().hasOnly(['author', 'text', 'rating', 'createdAt'])
+        request.resource.data.keys().hasOnly(['author', 'text', 'rating', 'approved', 'createdAt'])
+        && request.resource.data.approved == false
         && shortString(request.resource.data.author, 80)
         && shortString(request.resource.data.text, 1000)
         && request.resource.data.rating is int

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, animate } from "framer-motion";
-import { collection, onSnapshot, query, addDoc, orderBy, limit, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, query, addDoc, where, limit, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 const menuCategories = [
@@ -246,7 +246,8 @@ export default function UnifiedHomePage() {
   }, []);
 
   useEffect(() => {
-    const qReviews = query(collection(db, "reviews"), orderBy("createdAt", "desc"), limit(50));
+    // Only reviews approved in /admin are public (enforced by firestore.rules).
+    const qReviews = query(collection(db, "reviews"), where("approved", "==", true), limit(50));
     const unsubReviews = onSnapshot(qReviews, (snapshot) => {
       const fetchedReviews = snapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
@@ -323,11 +324,12 @@ export default function UnifiedHomePage() {
         author: reviewForm.author,
         text: reviewForm.text,
         rating: reviewForm.rating,
+        approved: false,
         createdAt: serverTimestamp()
       });
       setIsReviewFormOpen(false);
       setReviewForm({ author: "", text: "", rating: 5 });
-      alert("Vielen Dank für deine Bewertung!");
+      alert("Vielen Dank für deine Bewertung! Sie erscheint nach einer kurzen Prüfung auf der Website.");
     } catch (error) {
       console.error("Fehler beim Speichern der Bewertung:", error);
       alert("Es gab ein Problem. Bitte versuche es später nochmal.");
