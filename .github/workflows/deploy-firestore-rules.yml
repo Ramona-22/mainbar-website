@@ -1,0 +1,52 @@
+# Deploys firestore.rules to the client's Firebase project whenever the rules
+# change on main, so contributors only need to push to GitHub.
+#
+# One-time setup by the repo owner (until then this job is skipped):
+#   1. Firebase console > Project settings > Service accounts >
+#      "Generate new private key" (downloads a .json file).
+#   2. GitHub repo > Settings > Secrets and variables > Actions >
+#      New repository secret, name FIREBASE_SERVICE_ACCOUNT, paste the
+#      whole .json file contents.
+name: Deploy Firestore rules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - firestore.rules
+      - firebase.json
+      - .github/workflows/deploy-firestore-rules.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firestore-rules
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - name: Skip until the secret is configured
+        if: env.FIREBASE_SERVICE_ACCOUNT == ''
+        run: echo "::warning::FIREBASE_SERVICE_ACCOUNT secret not set - rules were NOT deployed."
+
+      - uses: actions/checkout@v4
+        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+
+      - uses: actions/setup-node@v4
+        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        with:
+          node-version: 20
+
+      - name: Deploy rules
+        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@14 deploy --only firestore:rules --project mainbar-1fe16 --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
