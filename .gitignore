@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local audit/crawl output
 /audit-report/
+
+# browser test logs
+/.playwright-mcp/
