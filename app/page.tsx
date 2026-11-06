@@ -104,20 +104,25 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 // =========================================================================
 // HERO BACKGROUND VIDEO
-// The poster (a 37 KB still of the first frame) shows instantly and is what
-// phones display if autoplay is blocked (e.g. iPhone Low Power Mode); the
-// video then starts on the first tap/scroll. Replaces a 46 MB GIF fallback.
+// The poster (a 37 KB still) paints instantly while the video loads.
+// iPhones in Low Power Mode refuse to autoplay video; then we show an
+// animated WebP of the same clip (2.5 MB, only downloaded in that case,
+// since images still animate in Low Power Mode) and switch back to the video
+// on the first tap/scroll, which iOS allows.
 // =========================================================================
 const BackgroundVideo = ({
   src,
   poster,
+  autoplayFallback,
   className
 }: {
   src: string;
   poster: string;
+  autoplayFallback: string;
   className: string;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
   // Start downloading the still image right away so it paints first.
   preload(poster, { as: "image", fetchPriority: "high" });
@@ -131,7 +136,13 @@ const BackgroundVideo = ({
     video.playsInline = true;
 
     const tryPlay = () => {
-      if (video.paused) video.play().catch(() => {});
+      if (!video.paused) return;
+      video
+        .play()
+        .then(() => setAutoplayBlocked(false))
+        .catch((error: unknown) => {
+          if ((error as { name?: string })?.name === "NotAllowedError") setAutoplayBlocked(true);
+        });
     };
     tryPlay();
 
@@ -141,18 +152,24 @@ const BackgroundVideo = ({
   }, []);
 
   return (
-    <video
-      ref={videoRef}
-      src={src}
-      poster={poster}
-      className={className}
-      autoPlay
-      playsInline
-      muted
-      loop
-      preload="auto"
-      aria-hidden="true"
-    />
+    <>
+      <video
+        ref={videoRef}
+        src={src}
+        poster={poster}
+        className={className}
+        autoPlay
+        playsInline
+        muted
+        loop
+        preload="auto"
+        aria-hidden="true"
+      />
+      {autoplayBlocked && (
+        // eslint-disable-next-line @next/next/no-img-element -- animated WebP must stay unprocessed
+        <img src={autoplayFallback} alt="" aria-hidden="true" className={`absolute inset-0 ${className}`} />
+      )}
+    </>
   );
 };
 
@@ -449,6 +466,7 @@ export default function UnifiedHomePage() {
           <BackgroundVideo
             src="/media/mainbar-hero.mp4"
             poster="/media/mainbar-hero-poster.webp"
+            autoplayFallback="/media/mainbar-hero-loop.webp"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-[#121111]/45 z-10" />
