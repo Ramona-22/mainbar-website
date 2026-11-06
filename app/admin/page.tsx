@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   User,
@@ -110,6 +111,8 @@ export default function AdminPortal() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [info, setInfo] = useState("");
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   // Auth
   useEffect(() => {
@@ -159,6 +162,7 @@ export default function AdminPortal() {
     e.preventDefault();
     setIsLoggingIn(true);
     setError("");
+    setInfo("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
@@ -174,6 +178,32 @@ export default function AdminPortal() {
     } finally {
       setIsLoggingIn(false);
     }
+  };
+
+  const handlePasswordReset = async () => {
+    setError("");
+    setInfo("");
+    if (!email.trim()) {
+      setError("Bitte zuerst oben die E-Mail-Adresse eingeben.");
+      return;
+    }
+    setIsSendingReset(true);
+    try {
+      auth.languageCode = "de";
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch (err) {
+      // Only show input problems; never reveal whether an account exists.
+      if (getErrorInfo(err).code === "auth/invalid-email") {
+        setError("Bitte eine gültige E-Mail-Adresse eingeben.");
+        setIsSendingReset(false);
+        return;
+      }
+      console.error(err);
+    }
+    setInfo(
+      "Falls ein Admin-Konto mit dieser E-Mail existiert, wurde ein Link zum Zurücksetzen des Passworts gesendet. Bitte auch den Spam-Ordner prüfen."
+    );
+    setIsSendingReset(false);
   };
 
   const handleLogout = async () => {
@@ -381,6 +411,17 @@ export default function AdminPortal() {
             >
               {isLoggingIn ? "Wird geladen..." : "Einloggen"}
             </button>
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              disabled={isSendingReset}
+              className="w-full text-center text-xs text-[#a0a0a0] hover:text-[#cda1b1] underline underline-offset-4"
+            >
+              {isSendingReset ? "Wird gesendet..." : "Passwort vergessen?"}
+            </button>
+            {info && (
+              <p className="text-green-700 text-xs text-center" role="status">{info}</p>
+            )}
           </form>
         </motion.div>
       </div>
