@@ -1,6 +1,21 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-export const metadata = { title: "Datenschutzerklärung | MainBar" };
+export const metadata = {
+  title: "Datenschutzerklärung | MainBar",
+  alternates: { canonical: "/datenschutz" },
+};
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section>
+      <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">{title}</h2>
+      <div className="space-y-3 text-[#4a4a4a]">{children}</div>
+    </section>
+  );
+}
+
+const linkClass = "text-[#b5788f] underline underline-offset-2";
 
 export default function DatenschutzPage() {
   return (
@@ -8,180 +23,198 @@ export default function DatenschutzPage() {
       <div className="max-w-2xl mx-auto">
         <Link
           href="/"
-          className="text-[#a0a0a0] hover:text-[#cda1b1] uppercase tracking-widest text-[10px] md:text-xs transition-colors"
+          className="text-[#6b6b6b] hover:text-[#b5788f] uppercase tracking-widest text-[10px] md:text-xs transition-colors"
         >
           ← Zurück zur Startseite
         </Link>
 
-        <h1 className="font-serif text-4xl md:text-5xl text-[#2d2d2d] mt-6 mb-4">
-          Datenschutzerklärung
-        </h1>
-        <div className="w-12 h-px bg-[#cda1b1] mb-10" />
+        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#2d2d2d] mt-6 mb-4 break-words">Datenschutzerklärung</h1>
+        <div className="w-12 h-px bg-[#cda1b1] mb-4" />
+        <p className="text-xs text-[#6b6b6b] mb-10">Stand: November 2026</p>
 
         <div className="space-y-8 text-sm text-[#2d2d2d] leading-relaxed">
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">1. Verantwortlicher</h2>
-            <p className="text-[#4a4a4a]">
-              MainBar, Inhaberin: [Name der Inhaberin], Spitalstraße 19, 97421 Schweinfurt<br />
-              E-Mail: info@mainbar-sw.de<br />
-              Telefon: +49 170 2278096
+          <Section title="1. Verantwortlicher">
+            <p>
+              MainBar, Inhaberin: [Name der Inhaberin]
+              <br />
+              Spitalstraße 19, 97421 Schweinfurt
+              <br />
+              E-Mail: <a href="mailto:info@mainbar-sw.de" className={linkClass}>info@mainbar-sw.de</a>
+              <br />
+              Telefon: <a href="tel:+491702278096" className={linkClass}>+49 170 2278096</a>
             </p>
-          </section>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">2. Hosting</h2>
-            <p className="text-[#4a4a4a]">
-              Diese Website wird bei Vercel Inc. (340 S Lemon Ave #4133, Walnut, CA 91789, USA) gehostet.
-              Beim Aufruf der Website erhebt der Hosting-Anbieter automatisch technische Informationen
-              (Server-Logfiles), u. a. IP-Adresse, Datum und Uhrzeit des Zugriffs, aufgerufene Seite
-              und Browsertyp. Diese Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses
-              an einem sicheren und stabilen Betrieb der Website (Art. 6 Abs. 1 lit. f DSGVO).
-              Mit Vercel wurde ein Auftragsverarbeitungsvertrag (AVV) geschlossen. Die Datenübertragung
-              in die USA erfolgt auf Basis von Standardvertragsklauseln.
+          <Section title="2. Überblick">
+            <p>
+              Wir verarbeiten personenbezogene Daten nur, soweit dies für den Betrieb dieser Website, die
+              Bearbeitung Ihrer Anfragen oder die Anzeige Ihrer Bewertung erforderlich ist. Wir setzen
+              keine Analyse-, Tracking- oder Werbe-Cookies ein und erstellen keine Nutzungsprofile. Die
+              Übertragung zwischen Ihrem Browser und unserer Website ist per TLS (HTTPS) verschlüsselt.
             </p>
-            <p className="text-[#4a4a4a] mt-3">
-              Zum Schutz vor Missbrauch (z. B. massenhaft versendete Anfragen) wird beim Absenden des
-              Buchungsformulars oder eines Löschantrags Ihre IP-Adresse an unseren Dienstleister
-              Upstash, Inc. (Redis-Datenbank) übermittelt und dort nur kurzzeitig, höchstens ca.
-              20 Minuten, gespeichert, um die Anzahl der Anfragen zu begrenzen. Rechtsgrundlage ist
-              unser berechtigtes Interesse an der Sicherheit der Website (Art. 6 Abs. 1 lit. f DSGVO).
-            </p>
-          </section>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">3. Event- & Catering-Anfrage (Buchungsformular)</h2>
-            <p className="text-[#4a4a4a]">
-              Wenn Sie über das Buchungsformular eine Event- oder Catering-Anfrage stellen, verarbeiten wir
-              folgende personenbezogene Daten: Sitzplatzwahl, Anzahl der Gäste, Datum, Bundesland, Stadt,
-              Telefonnummer und E-Mail-Adresse. Diese Daten werden zwecks Bearbeitung Ihrer Anfrage
-              in unserer Firebase-Datenbank (Google Cloud, Irland) gespeichert und per E-Mail (Nodemailer
-              über Gmail) an uns sowie als Bestätigung an Sie versendet. Rechtsgrundlage ist Art. 6 Abs. 1
-              lit. b DSGVO (vorvertragliche Maßnahmen) sowie Ihre ausdrückliche Einwilligung per
-              Checkbox (Art. 6 Abs. 1 lit. a DSGVO). Die Daten werden gelöscht, sobald die Anfrage
-              abschließend bearbeitet ist und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
-              Für den E-Mail-Versand nutzen wir Gmail (Google Ireland Ltd., Gordon House, Barrow Street,
-              Dublin 4, Irland) – hierfür besteht ein AVV und die Datenverarbeitung erfolgt innerhalb der EU.
+          <Section title="3. Hosting und Server-Logfiles">
+            <p>
+              Diese Website wird bei Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA,
+              gehostet. Beim Aufruf der Website verarbeitet der Hosting-Anbieter automatisch technische
+              Daten (Server-Logfiles), insbesondere IP-Adresse, Datum und Uhrzeit des Zugriffs, aufgerufene
+              Seite, Referrer und Browsertyp. Dies ist erforderlich, um die Website auszuliefern und ihre
+              Sicherheit und Stabilität zu gewährleisten (Art. 6 Abs. 1 lit. f DSGVO).
             </p>
-          </section>
+            <p>
+              Mit Vercel besteht ein Auftragsverarbeitungsvertrag. Eine Übermittlung in die USA erfolgt auf
+              Grundlage des EU-US Data Privacy Framework, unter dem Vercel zertifiziert ist, sowie ergänzend
+              auf Grundlage von Standardvertragsklauseln der EU-Kommission.
+            </p>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">4. Bewertungen</h2>
-            <p className="text-[#4a4a4a]">
-              Wenn Sie über das Bewertungsformular auf unserer Startseite eine Bewertung abgeben,
-              speichern wir den von Ihnen angegebenen Vornamen, Ihre Bewertung (Sterne) und Ihren Text,
-              um diese auf der Website anzuzeigen. Rechtsgrundlage ist Ihre Einwilligung durch das
-              aktive Absenden des Formulars samt Checkbox (Art. 6 Abs. 1 lit. a DSGVO). Die Bewertungen
-              werden in Firebase (Google Cloud, Irland) gespeichert. Sie können die Löschung Ihrer
-              Bewertung jederzeit per E-Mail an info@mainbar-sw.de beantragen.
+          <Section title="4. Schutz vor Missbrauch">
+            <p>
+              Beim Absenden des Buchungsformulars oder eines Löschantrags verarbeiten wir Ihre IP-Adresse,
+              um die Anzahl der Anfragen pro Absender zu begrenzen und so massenhaft versendete
+              Spam-Anfragen zu verhindern. Die IP-Adresse wird dafür nur kurzzeitig gespeichert (höchstens
+              ca. 20 Minuten), im Arbeitsspeicher unseres Servers und ggf. bei unserem Dienstleister
+              Upstash, Inc. (Redis-Datenbank). Rechtsgrundlage ist unser berechtigtes Interesse an der
+              Sicherheit der Website (Art. 6 Abs. 1 lit. f DSGVO).
             </p>
-          </section>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">5. Cookies & Cookie-Consent</h2>
-            <p className="text-[#4a4a4a]">
-              Wir nutzen ein Cookie-Consent-Tool, das Ihre Einwilligung in verschiedene Cookie-Kategorien
-              einholt und dokumentiert. Folgende Kategorien werden unterschieden:
+          <Section title="5. Event- & Catering-Anfrage (Buchungsformular)">
+            <p>
+              Wenn Sie über das Buchungsformular eine Anfrage stellen, verarbeiten wir: gewünschten
+              Bereich (innen, außen oder Catering), Anzahl der Gäste, Datum, Bundesland, Stadt,
+              Telefonnummer und E-Mail-Adresse.
             </p>
-            <ul className="list-disc list-inside space-y-2 text-[#4a4a4a] mt-2 ml-4">
-              <li><strong>Essenzielle Cookies (immer aktiv):</strong> Notwendig für den Betrieb der Website
-                (z. B. Spracheinstellung, Sitzung, Cookie-Consent-Status). Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</li>
-              <li><strong>Funktionale Cookies (nach Einwilligung):</strong> Ermöglichen erweiterte Funktionen
-                wie Google Maps (Kartenansicht auf der Kontaktseite).
-                Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).</li>
-              <li><strong>Analytics Cookies:</strong> Werden aktuell nicht eingesetzt.</li>
-              <li><strong>Marketing Cookies:</strong> Werden aktuell nicht eingesetzt.</li>
-            </ul>
-            <p className="text-[#4a4a4a] mt-2">
-              Ihre Einwilligung wird im Local Storage Ihres Browsers (cookie-consent) für 12 Monate gespeichert.
-              Sie können Ihre Einstellungen jederzeit über den Link „Cookie-Einstellungen“ im Footer widerrufen
-              oder anpassen.
+            <p>
+              Ihre Angaben werden zunächst von unserem Server geprüft, anschließend per E-Mail an uns
+              gesendet und in unserer Firebase-Datenbank (siehe Ziffer 10) gespeichert, damit wir die
+              Anfrage bearbeiten können. Sie erhalten eine Eingangsbestätigung per E-Mail, die nur Datum,
+              Personenzahl und Bereich enthält.
             </p>
-          </section>
+            <p>
+              Rechtsgrundlage ist die Durchführung vorvertraglicher Maßnahmen auf Ihre Anfrage
+              (Art. 6 Abs. 1 lit. b DSGVO) sowie Ihre Einwilligung über die Checkbox im Formular
+              (Art. 6 Abs. 1 lit. a DSGVO). Die Daten werden gelöscht, sobald die Anfrage abschließend
+              bearbeitet ist und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
+            </p>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">6. Google Maps</h2>
-            <p className="text-[#4a4a4a]">
-              Auf der Kontaktseite binden wir eine Google Maps-Karte ein. Diese wird erst geladen, wenn Sie
-              in funktionale Cookies eingewilligt haben oder explizit auf „Karte laden & Einwilligen“ klicken.
-              Anbieter: Google Ireland Ltd., Gordon House, Barrow Street, Dublin 4, Irland. Dabei werden
-              Ihre IP-Adresse und ggf. weitere Browserdaten an Google übermittelt. Rechtsgrundlage:
-              Art. 6 Abs. 1 lit. a DSGVO (Einwilligung). Weitere Informationen: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#cda1b1] hover:underline">Google Datenschutzerklärung</a>.
+          <Section title="6. E-Mail-Versand">
+            <p>
+              Für den Versand der Anfrage- und Bestätigungs-E-Mails nutzen wir den E-Mail-Dienst Gmail der
+              Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Dabei werden die
+              Inhalte der E-Mail und die beteiligten E-Mail-Adressen von Google verarbeitet. Eine
+              Übermittlung an die Google LLC in den USA ist möglich; Google ist unter dem EU-US Data
+              Privacy Framework zertifiziert. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b bzw. lit. f DSGVO.
             </p>
-          </section>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">7. Google Fonts</h2>
-            <p className="text-[#4a4a4a]">
-              Wir nutzen Google Fonts (Inter, Great Vibes, Playfair Display) über das next/font-Modul von Next.js.
-              Die Schriftarten werden lokal (self-hosted) ausgeliefert, es findet keine Verbindung zu
-              Google-Servern beim Seitenaufruf statt. Somit werden keine personenbezogenen Daten an Google
-              übermittelt.
+          <Section title="7. Bewertungen">
+            <p>
+              Wenn Sie auf der Startseite eine Bewertung abgeben, speichern wir den angegebenen Vornamen,
+              die Sternebewertung, Ihren Text und den Zeitpunkt der Abgabe. Bewertungen werden erst nach
+              einer Prüfung durch uns auf der Website veröffentlicht; wir können Bewertungen ablehnen oder
+              entfernen, etwa bei beleidigenden Inhalten oder Spam.
             </p>
-          </section>
+            <p>
+              Rechtsgrundlage ist Ihre Einwilligung durch das Absenden des Formulars samt Checkbox
+              (Art. 6 Abs. 1 lit. a DSGVO). Die Bewertungen werden in Firebase gespeichert (Ziffer 10).
+              Sie können Ihre Einwilligung jederzeit widerrufen und die Löschung verlangen (Ziffer 12).
+            </p>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">8. Firebase (Google Cloud)</h2>
-            <p className="text-[#4a4a4a]">
-              Für die Speicherung von Buchungsanfragen, Bewertungen und Menüdaten nutzen wir
-              Firebase Firestore (Google Cloud, Region: europe-west1 / Irland). Es besteht ein
-              Auftragsverarbeitungsvertrag (AVV) mit Google. Die Datenverarbeitung erfolgt auf
-              Servern in der EU. Rechtsgrundlage für die Speicherung: Art. 6 Abs. 1 lit. b DSGVO
-              (Vertragserfüllung) bzw. Art. 6 Abs. 1 lit. a DSGVO (Einwilligung bei Bewertungen).
+          <Section title="8. Löschanträge über die Website">
+            <p>
+              Über den Link „Daten löschen“ auf der Startseite können Sie die Löschung Ihrer Daten
+              beantragen. Die angegebene E-Mail-Adresse wird dabei per E-Mail an uns übermittelt. Wir
+              prüfen den Antrag, löschen die zugehörigen Anfragen und Bewertungen und bestätigen Ihnen die
+              Löschung per E-Mail, spätestens innerhalb eines Monats. Rechtsgrundlage ist die Erfüllung
+              unserer rechtlichen Pflichten (Art. 6 Abs. 1 lit. c i. V. m. Art. 17 DSGVO).
             </p>
-          </section>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">9. Soziale Medien</h2>
-            <p className="text-[#4a4a4a]">
-              Auf unserer Website verlinken wir zu unseren Profilen auf Instagram und Facebook.
-              Beim Klick auf die Links verlassen Sie unsere Website. Für die Datenverarbeitung
-              durch Meta (Facebook/Instagram) sind wir nicht verantwortlich. Bitte beachten Sie
-              die jeweiligen Datenschutzerklärungen der Anbieter.
+          <Section title="9. Cookies und lokale Speicherung">
+            <p>
+              Diese Website setzt keine Cookies zu Analyse-, Tracking- oder Werbezwecken und bindet keine
+              Inhalte Dritter ein, für die eine Einwilligung erforderlich wäre. Gespeichert wird lediglich
+              im Local Storage Ihres Browsers (Eintrag „cookie-consent“), dass Sie unseren
+              Cookie-Hinweis gesehen haben, samt Zeitpunkt, damit er nicht bei jedem Besuch erneut
+              erscheint. Diese Speicherung ist unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG); die
+              Angaben verlassen Ihr Gerät nicht. Nach 12 Monaten wird der Hinweis erneut angezeigt.
             </p>
-          </section>
+            <p>
+              Den Hinweis können Sie jederzeit über „Cookie-Einstellungen“ am Seitenende erneut aufrufen.
+              Den gespeicherten Eintrag können Sie außerdem über die Einstellungen Ihres Browsers löschen.
+            </p>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">10. Ihre Rechte</h2>
-            <p className="text-[#4a4a4a]">
-              Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
-              Verarbeitung, Datenübertragbarkeit sowie Widerspruch gegen die Verarbeitung Ihrer
-              Daten (Art. 15–21 DSGVO). Zudem haben Sie das Recht, sich bei einer
-              Datenschutz-Aufsichtsbehörde zu beschweren, z. B. beim Bayerischen Landesamt für
-              Datenschutzaufsicht (Promenade 18, 91522 Ansbach).
+          <Section title="10. Firebase (Google Cloud)">
+            <p>
+              Für die Speisekarte, Bewertungen und Buchungsanfragen nutzen wir die Datenbank Firebase
+              Cloud Firestore der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland.
+              Beim Aufruf der Startseite lädt Ihr Browser die Speisekarte und die veröffentlichten
+              Bewertungen direkt von Servern von Google; dabei wird Ihre IP-Adresse an Google übermittelt.
+              Rechtsgrundlage ist unser berechtigtes Interesse an der Darstellung aktueller Inhalte
+              (Art. 6 Abs. 1 lit. f DSGVO) bzw. für Anfragen und Bewertungen die in Ziffer 5 und 7
+              genannten Grundlagen.
             </p>
-            <p className="text-[#4a4a4a] mt-3">
-              <strong>Widerruf Ihrer Einwilligung:</strong> Eine erteilte Einwilligung können Sie
-              jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3 DSGVO), z. B. per E-Mail
-              oder für Cookies über „Cookie-Einstellungen“ im Footer. Die Rechtmäßigkeit der bis zum
-              Widerruf erfolgten Verarbeitung bleibt unberührt.
+            <p>
+              Mit Google besteht ein Auftragsverarbeitungsvertrag. Eine Übermittlung an die Google LLC in
+              den USA ist möglich; Google ist unter dem EU-US Data Privacy Framework zertifiziert.
             </p>
-            <p className="text-[#4a4a4a] mt-3">
-              <strong>Widerspruchsrecht:</strong> Soweit wir Daten auf Grundlage berechtigter
-              Interessen (Art. 6 Abs. 1 lit. f DSGVO) verarbeiten, können Sie aus Gründen, die sich
-              aus Ihrer besonderen Situation ergeben, jederzeit Widerspruch einlegen (Art. 21 DSGVO).
-            </p>
-            <p className="text-[#4a4a4a] mt-3">
-              Die Angabe Ihrer Daten im Buchungs- oder Bewertungsformular ist freiwillig; ohne sie
-              können wir Ihre Anfrage jedoch nicht bearbeiten bzw. Ihre Bewertung nicht
-              veröffentlichen. Eine automatisierte Entscheidungsfindung einschließlich Profiling
-              findet nicht statt.
-            </p>
-            <p className="text-[#4a4a4a] mt-2">
-              Zur Ausübung Ihrer Rechte (z. B. Löschung Ihrer Buchungsanfrage oder Bewertung)
-              kontaktieren Sie uns bitte per E-Mail an info@mainbar-sw.de.
-            </p>
-          </section>
+          </Section>
 
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">11. Speicherdauer</h2>
-            <p className="text-[#4a4a4a]">
-              Personenbezogene Daten werden nur so lange gespeichert, wie es für den jeweiligen
-              Verarbeitungszweck erforderlich ist oder gesetzliche Aufbewahrungspflichten
-              (z. B. steuerrechtlich 10 Jahre für Rechnungsdaten) bestehen. Buchungsanfragen
-              und Bewertungen werden nach Abschluss der Bearbeitung bzw. auf Ihren Wunsch hin
-              gelöscht.
+          <Section title="11. Schriftarten und externe Links">
+            <p>
+              Die verwendeten Schriftarten werden von unserem eigenen Server ausgeliefert; beim Seitenaufruf
+              wird keine Verbindung zu Google Fonts hergestellt.
             </p>
-          </section>
+            <p>
+              Wir verlinken auf unser Profil bei Instagram (Meta Platforms Ireland Ltd.) und auf Google
+              Maps. Es handelt sich um einfache Links: Daten werden erst übertragen, wenn Sie einen Link
+              anklicken und unsere Website verlassen. Dann gelten die Datenschutzbestimmungen des
+              jeweiligen Anbieters.
+            </p>
+          </Section>
+
+          <Section title="12. Ihre Rechte">
+            <p>
+              Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,
+              Datenübertragbarkeit und Widerspruch (Art. 15–21 DSGVO). Zur Ausübung genügt eine E-Mail an{" "}
+              <a href="mailto:info@mainbar-sw.de" className={linkClass}>info@mainbar-sw.de</a> oder der
+              Link „Daten löschen“ auf der Startseite.
+            </p>
+            <p>
+              <strong>Widerruf Ihrer Einwilligung:</strong> Eine erteilte Einwilligung können Sie jederzeit
+              mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3 DSGVO), z. B. per E-Mail. Die
+              Rechtmäßigkeit der bis dahin erfolgten Verarbeitung bleibt unberührt.
+            </p>
+            <p>
+              <strong>Widerspruchsrecht:</strong> Soweit wir Daten auf Grundlage berechtigter Interessen
+              (Art. 6 Abs. 1 lit. f DSGVO) verarbeiten, können Sie aus Gründen, die sich aus Ihrer
+              besonderen Situation ergeben, jederzeit widersprechen (Art. 21 DSGVO).
+            </p>
+            <p>
+              <strong>Beschwerderecht:</strong> Sie können sich bei einer Datenschutz-Aufsichtsbehörde
+              beschweren, z. B. beim Bayerischen Landesamt für Datenschutzaufsicht, Promenade 18,
+              91522 Ansbach.
+            </p>
+            <p>
+              Die Angabe Ihrer Daten in den Formularen ist freiwillig; ohne sie können wir Ihre Anfrage
+              jedoch nicht bearbeiten bzw. Ihre Bewertung nicht veröffentlichen. Eine automatisierte
+              Entscheidungsfindung einschließlich Profiling findet nicht statt.
+            </p>
+          </Section>
+
+          <Section title="13. Speicherdauer">
+            <p>
+              Wir speichern personenbezogene Daten nur so lange, wie es für den jeweiligen Zweck
+              erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen (z. B. bis zu 10 Jahre für
+              steuerrelevante Unterlagen bei zustande gekommenen Aufträgen). Buchungsanfragen und
+              Bewertungen löschen wir nach Abschluss der Bearbeitung bzw. auf Ihren Wunsch.
+            </p>
+          </Section>
         </div>
       </div>
     </main>

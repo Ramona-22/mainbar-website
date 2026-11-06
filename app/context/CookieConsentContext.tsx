@@ -1,41 +1,29 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, useSyncExternalStore, ReactNode } from "react";
+import { createContext, useContext, useState, useSyncExternalStore, ReactNode } from "react";
 
-type CookieConsent = {
-  necessary: boolean;
-  analytics: boolean;
-  marketing: boolean;
-  functional: boolean;
-};
+// The site sets no tracking, analytics or marketing cookies and embeds no
+// third-party content that needs consent. The only thing stored is that the
+// visitor has seen the privacy notice (localStorage), so it is not shown again.
 
 type CookieConsentContextType = {
-  consent: CookieConsent | null;
-  hasConsented: boolean;
   showBanner: boolean;
-  showSettings: boolean;
-  acceptAll: () => void;
-  acceptNecessaryOnly: () => void;
-  savePreferences: (preferences: Partial<CookieConsent>) => void;
-  openBanner: () => void;
+  acknowledge: () => void;
   openSettings: () => void;
   closeBanner: () => void;
-  resetConsent: () => void;
 };
 
-const defaultConsent: CookieConsent = {
-  necessary: true,
-  analytics: false,
-  marketing: false,
-  functional: false,
-};
+const STORAGE_KEY = "cookie-consent";
+// Bump when the notice changes, so visitors see it again.
+const CONSENT_VERSION = 3;
+// Show the notice again after 12 months (as stated in the Datenschutzerklärung).
+const MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
 
 const CookieConsentContext = createContext<CookieConsentContextType | undefined>(undefined);
 
-const STORAGE_KEY = "cookie-consent";
 const listeners = new Set<() => void>();
 
-const readStoredConsent = (): string | null => {
+const readStored = (): string | null => {
   try {
     return localStorage.getItem(STORAGE_KEY);
   } catch {
@@ -43,12 +31,11 @@ const readStoredConsent = (): string | null => {
   }
 };
 
-const writeStoredConsent = (value: CookieConsent | null) => {
+const writeStored = (value: object) => {
   try {
-    if (value) localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-    else localStorage.removeItem(STORAGE_KEY);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   } catch {
-    // Storage unavailable (private mode / blocked) — consent lasts for this page view only.
+    // Storage unavailable (private mode / blocked): the notice is hidden for this page view only.
   }
   listeners.forEach((l) => l());
 };
@@ -62,72 +49,44 @@ const subscribe = (listener: () => void) => {
   };
 };
 
-const parseConsent = (raw: string | null | undefined): CookieConsent | null => {
-  if (!raw) return null;
+// Old, expired or malformed entries count as "not seen yet".
+const isAcknowledged = (raw: string | null | undefined): boolean => {
+  if (!raw) return false;
   try {
-    return JSON.parse(raw) as CookieConsent;
+    const stored = JSON.parse(raw) as { version?: number; savedAt?: number };
+    return (
+      stored.version === CONSENT_VERSION &&
+      typeof stored.savedAt === "number" &&
+      Date.now() - stored.savedAt <= MAX_AGE_MS
+    );
   } catch {
-    return null;
+    return false;
   }
 };
 
 export function CookieConsentProvider({ children }: { children: ReactNode }) {
-  // undefined on the server / before hydration, so nothing consent-related renders until mounted.
-  const raw = useSyncExternalStore<string | null | undefined>(subscribe, readStoredConsent, () => undefined);
-  const [sessionConsent, setSessionConsent] = useState<CookieConsent | null>(null);
-  const consent = useMemo(() => parseConsent(raw) ?? sessionConsent, [raw, sessionConsent]);
-  const mounted = raw !== undefined;
-
-  // null = default behaviour (show the banner until the visitor has decided).
+  // undefined on the server / before hydration, so the notice only renders once mounted.
+  const raw = useSyncExternalStore<string | null | undefined>(subscribe, readStored, () => undefined);
+  const [acknowledgedThisVisit, setAcknowledgedThisVisit] = useState(false);
+  // null = default (show until acknowledged); true/false = opened/closed by the visitor.
   const [bannerVisible, setBannerVisible] = useState<boolean | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
 
-  const saveConsent = (newConsent: CookieConsent) => {
-    setSessionConsent(newConsent);
-    writeStoredConsent(newConsent);
+  const mounted = raw !== undefined;
+  const acknowledged = acknowledgedThisVisit || isAcknowledged(raw);
+
+  const acknowledge = () => {
+    setAcknowledgedThisVisit(true);
+    writeStored({ necessary: true, version: CONSENT_VERSION, savedAt: Date.now() });
     setBannerVisible(false);
-    setShowSettings(false);
-  };
-
-  const acceptAll = () =>
-    saveConsent({ necessary: true, analytics: true, marketing: true, functional: true });
-
-  const acceptNecessaryOnly = () => saveConsent({ ...defaultConsent });
-
-  const savePreferences = (preferences: Partial<CookieConsent>) =>
-    saveConsent({ ...defaultConsent, ...consent, ...preferences, necessary: true });
-
-  const openBanner = () => setBannerVisible(true);
-  const openSettings = () => {
-    setBannerVisible(true);
-    setShowSettings(true);
-  };
-  const closeBanner = () => {
-    setBannerVisible(false);
-    setShowSettings(false);
-  };
-
-  const resetConsent = () => {
-    setSessionConsent(null);
-    writeStoredConsent(null);
-    setBannerVisible(true);
-    setShowSettings(false);
   };
 
   return (
     <CookieConsentContext.Provider
       value={{
-        consent: mounted ? consent : null,
-        hasConsented: mounted && consent !== null,
-        showBanner: mounted && (bannerVisible ?? consent === null),
-        showSettings: mounted && showSettings,
-        acceptAll,
-        acceptNecessaryOnly,
-        savePreferences,
-        openBanner,
-        openSettings,
-        closeBanner,
-        resetConsent,
+        showBanner: mounted && (bannerVisible ?? !acknowledged),
+        acknowledge,
+        openSettings: () => setBannerVisible(true),
+        closeBanner: () => setBannerVisible(false),
       }}
     >
       {children}
@@ -135,23 +94,13 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useCookieConsent() {
+const noop = () => {};
+
+export function useCookieConsent(): CookieConsentContextType {
   const context = useContext(CookieConsentContext);
   if (!context) {
-    // Return default values for SSR/static generation
-    return {
-      consent: null,
-      hasConsented: false,
-      showBanner: false,
-      showSettings: false,
-      acceptAll: () => {},
-      acceptNecessaryOnly: () => {},
-      savePreferences: () => {},
-      openBanner: () => {},
-      openSettings: () => {},
-      closeBanner: () => {},
-      resetConsent: () => {},
-    };
+    // Default values for SSR/static generation
+    return { showBanner: false, acknowledge: noop, openSettings: noop, closeBanner: noop };
   }
   return context;
 }

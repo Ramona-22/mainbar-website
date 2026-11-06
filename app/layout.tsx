@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Great_Vibes, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { LanguageProvider } from "./context/LanguageContext";
 import { CookieConsentProvider } from "./context/CookieConsentContext";
 import CookieConsentBanner from "./components/CookieConsentBanner";
+import LegalFooter from "./components/LegalFooter";
 import { siteUrl } from "./siteUrl";
 
 // Optimize fonts for faster mobile loading
@@ -89,9 +89,8 @@ export default function RootLayout({
           }}
         />
         <CookieConsentProvider>
-          <LanguageProvider>
-            {children}
-          </LanguageProvider>
+          {children}
+          <LegalFooter />
           <CookieConsentBanner />
         </CookieConsentProvider>
       </body>

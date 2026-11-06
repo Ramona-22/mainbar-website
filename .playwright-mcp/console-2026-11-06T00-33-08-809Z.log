@@ -1,0 +1,4 @@
+[   38675ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3123/menu:0
+[   40236ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3123/gallery:0
+[   41792ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3123/contact:0
+[   43352ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3123/rustic:0

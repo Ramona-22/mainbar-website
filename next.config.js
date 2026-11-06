@@ -11,7 +11,7 @@ const csp = [
   "img-src 'self' data: blob: https://images.unsplash.com",
   "font-src 'self'",
   "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com",
-  "frame-src https://maps.google.com https://www.google.com https://*.firebaseapp.com",
+  "frame-src https://*.firebaseapp.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
