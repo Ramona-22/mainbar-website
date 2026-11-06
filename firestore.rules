@@ -7,17 +7,20 @@ rules_version = '2';
 //   npx firebase-tools deploy --only firestore:rules --project <project-id>
 // or paste this file into Firebase console > Firestore > Rules.
 //
-// Admins: a signed-in user counts as admin only if a document exists at
-// admins/{their uid}. Create it once in the Firebase console
-// (Firestore > admins > Add document, Document ID = the UID shown under
-// Authentication > Users). Being signed in alone is NOT enough, because anyone
-// can create a Firebase account with the public API key.
+// Admins: the signed-in account mainbarsw@gmail.com, plus any extra account
+// whose UID has a document at admins/{uid} (add in the Firebase console).
+// Being signed in alone is NOT enough, because anyone can create a Firebase
+// account with the public API key.
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Admin = the owner account below, or any account listed in admins/{uid}.
+    // Firebase allows only one account per email, and mainbarsw@gmail.com
+    // already exists, so nobody else can sign up with it.
     function isAdmin() {
       return request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+        && (request.auth.token.email == 'mainbarsw@gmail.com'
+            || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
     function shortString(v, max) {
