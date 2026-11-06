@@ -3,9 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
+import { preload } from "react-dom";
 import { motion, AnimatePresence, animate } from "framer-motion";
-import { collection, onSnapshot, query, addDoc, where, limit, serverTimestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
 
 const menuCategories = [
   "FRÜHSTÜCK",
@@ -104,19 +103,24 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 // =========================================================================
-// BULLETPROOF MOBILE VIDEO COMPONENT
+// HERO BACKGROUND VIDEO
+// The poster (a 37 KB still of the first frame) shows instantly and is what
+// phones display if autoplay is blocked (e.g. iPhone Low Power Mode); the
+// video then starts on the first tap/scroll. Replaces a 46 MB GIF fallback.
 // =========================================================================
 const BackgroundVideo = ({
   src,
-  fallbackGif,
+  poster,
   className
 }: {
   src: string;
-  fallbackGif: string;
+  poster: string;
   className: string;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoBlocked, setVideoBlocked] = useState(false);
+
+  // Start downloading the still image right away so it paints first.
+  preload(poster, { as: "image", fetchPriority: "high" });
 
   useEffect(() => {
     const video = videoRef.current;
@@ -126,51 +130,29 @@ const BackgroundVideo = ({
     video.defaultMuted = true;
     video.playsInline = true;
 
-    const attemptPlay = async () => {
-      try {
-        await video.play();
-      } catch {
-        setVideoBlocked(true);
-      }
+    const tryPlay = () => {
+      if (video.paused) video.play().catch(() => {});
     };
+    tryPlay();
 
-    attemptPlay();
-
-    const handleInteraction = () => {
-      if (videoBlocked && video) {
-        video.muted = true;
-        video.play().then(() => setVideoBlocked(false)).catch(() => {});
-      }
-    };
-
-    window.addEventListener("touchstart", handleInteraction, { once: true });
-    window.addEventListener("click", handleInteraction, { once: true });
-    window.addEventListener("scroll", handleInteraction, { once: true });
-
-    return () => {
-      window.removeEventListener("touchstart", handleInteraction);
-      window.removeEventListener("click", handleInteraction);
-      window.removeEventListener("scroll", handleInteraction);
-    };
-  }, [videoBlocked]);
+    const events = ["touchstart", "click", "scroll"] as const;
+    events.forEach((e) => window.addEventListener(e, tryPlay, { once: true, passive: true }));
+    return () => events.forEach((e) => window.removeEventListener(e, tryPlay));
+  }, []);
 
   return (
-    <>
-      {!videoBlocked ? (
-        <video
-          ref={videoRef}
-          src={src}
-          className={className}
-          autoPlay
-          playsInline
-          muted
-          loop
-          preload="auto"
-        />
-      ) : (
-        <img src={fallbackGif} alt="Background fallback" className={className} />
-      )}
-    </>
+    <video
+      ref={videoRef}
+      src={src}
+      poster={poster}
+      className={className}
+      autoPlay
+      playsInline
+      muted
+      loop
+      preload="auto"
+      aria-hidden="true"
+    />
   );
 };
 
@@ -232,45 +214,50 @@ export default function UnifiedHomePage() {
     };
   }, []);
 
+  // Firestore is loaded after first paint (dynamic import) so the hero shows
+  // immediately on slow phones; menu and reviews are further down the page.
   useEffect(() => {
-    const qMenu = query(collection(db, "menu"));
-    const unsubMenu = onSnapshot(qMenu, (snapshot) => {
-      setFirestoreMenuData(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data()
-        }) as MenuItem)
-      );
-    });
-    return () => unsubMenu();
-  }, []);
+    let cancelled = false;
+    const unsubscribers: Array<() => void> = [];
 
-  useEffect(() => {
-    // Only reviews approved in /admin are public (enforced by firestore.rules).
-    const qReviews = query(collection(db, "reviews"), where("approved", "==", true), limit(50));
-    const unsubReviews = onSnapshot(qReviews, (snapshot) => {
-      const fetchedReviews = snapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
-        // Guard against malformed docs: "☆".repeat() throws on a rating
-        // outside 0-5, which would crash the whole page.
-        .filter(
-          (r) =>
-            Number.isInteger(r.rating) &&
-            r.rating >= 3 &&
-            r.rating <= 5 &&
-            typeof r.text === "string" &&
-            typeof r.author === "string"
+    import("../lib/publicData")
+      .then(({ subscribeMenu, subscribeApprovedReviews }) => {
+        if (cancelled) return;
+        unsubscribers.push(
+          subscribeMenu((items) => setFirestoreMenuData(items as unknown as MenuItem[]))
         );
-      if (fetchedReviews.length > 0) {
-        setReviews(shuffleArray(fetchedReviews));
-      } else {
+        unsubscribers.push(
+          subscribeApprovedReviews(
+            (docs) => {
+              const fetchedReviews = (docs as unknown as Review[])
+                // Guard against malformed docs: "☆".repeat() throws on a rating
+                // outside 0-5, which would crash the whole page.
+                .filter(
+                  (r) =>
+                    Number.isInteger(r.rating) &&
+                    r.rating >= 3 &&
+                    r.rating <= 5 &&
+                    typeof r.text === "string" &&
+                    typeof r.author === "string"
+                );
+              setReviews(shuffleArray(fetchedReviews.length > 0 ? fetchedReviews : fallbackReviews));
+            },
+            (error) => {
+              console.error("Reviews could not be loaded:", error);
+              setReviews(shuffleArray(fallbackReviews));
+            }
+          )
+        );
+      })
+      .catch((error) => {
+        console.error("Menu/reviews could not be loaded:", error);
         setReviews(shuffleArray(fallbackReviews));
-      }
-    }, (error) => {
-      console.error("Reviews could not be loaded:", error);
-      setReviews(shuffleArray(fallbackReviews));
-    });
-    return () => unsubReviews();
+      });
+
+    return () => {
+      cancelled = true;
+      unsubscribers.forEach((unsub) => unsub());
+    };
   }, []);
 
   useEffect(() => {
@@ -320,13 +307,8 @@ export default function UnifiedHomePage() {
     
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "reviews"), {
-        author: reviewForm.author,
-        text: reviewForm.text,
-        rating: reviewForm.rating,
-        approved: false,
-        createdAt: serverTimestamp()
-      });
+      const { submitReview } = await import("../lib/publicData");
+      await submitReview(reviewForm);
       setIsReviewFormOpen(false);
       setReviewForm({ author: "", text: "", rating: 5 });
       alert("Vielen Dank für deine Bewertung! Sie erscheint nach einer kurzen Prüfung auf der Website.");
@@ -466,7 +448,7 @@ export default function UnifiedHomePage() {
         <div className="absolute inset-0 w-full h-full -z-30">
           <BackgroundVideo
             src="/media/mainbar-hero.mp4"
-            fallbackGif="/media/mainbar-hero.gif"
+            poster="/media/mainbar-hero-poster.webp"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-[#121111]/45 z-10" />
@@ -474,12 +456,7 @@ export default function UnifiedHomePage() {
 
         <div className="relative z-20 w-full h-full flex">
           <div className="w-full lg:w-1/2 h-full flex flex-col items-center justify-center text-center px-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="flex flex-col items-center -translate-y-1.75"
-            >
+            <div className="hero-fade-up flex flex-col items-center -translate-y-1.75">
               <div className="relative inline-flex flex-col items-center justify-center">
                 <div className="absolute w-44 h-44 md:w-52 md:h-52 border-2 border-[#cda1b1]/55 rounded-full -top-7 left-1/2 translate-x-[-58%] z-0 pointer-events-none"></div>
                 <div className="absolute w-44 h-44 md:w-52 md:h-52 border-2 border-[#cda1b1]/55 rounded-full -top-5 left-1/2 translate-x-[-38%] z-0 pointer-events-none"></div>
@@ -492,26 +469,22 @@ export default function UnifiedHomePage() {
               <div className="text-sm md:text-base tracking-[0.4em] text-white uppercase mt-2 z-10 drop-shadow-md text-center">
                 Drinks & Food
               </div>
-            </motion.div>
+            </div>
 
-            <motion.h2
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-white tracking-[0.25em] uppercase text-base md:text-lg font-medium mt-10 mb-10 drop-shadow-md text-center"
+            <h2
+              style={{ animationDelay: "0.3s" }}
+              className="hero-fade text-white tracking-[0.25em] uppercase text-base md:text-lg font-medium mt-10 mb-10 drop-shadow-md text-center"
             >
               Café & Patisserie
-            </motion.h2>
+            </h2>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full">
               <motion.button
                 onClick={scrollToMenu}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+                style={{ animationDelay: "0.5s", ["--hero-shift" as string]: "10px" }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
-                className="bg-[#cda1b1] text-[#1c1a1d] px-12 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-all duration-400 shadow-lg"
+                className="hero-fade-up bg-[#cda1b1] text-[#1c1a1d] px-12 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-all duration-400 shadow-lg"
               >
                 Zur Speisekarte
               </motion.button>
@@ -530,11 +503,9 @@ export default function UnifiedHomePage() {
           </div>
 
           <div className="hidden lg:flex w-1/2 h-full items-center justify-center relative">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.2 }}
-              className="relative z-10 w-[70%] mx-auto px-6"
+            <div
+              style={{ animationDelay: "0.2s", animationDuration: "0.9s" }}
+              className="hero-fade-up relative z-10 w-[70%] mx-auto px-6"
             >
               <p className="font-serif italic text-3xl text-white text-center leading-snug mb-6 drop-shadow-md">
                 „Bei uns ist Qualität das Produkt
@@ -556,7 +527,7 @@ export default function UnifiedHomePage() {
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>

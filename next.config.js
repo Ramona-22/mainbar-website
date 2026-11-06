@@ -44,6 +44,12 @@ const nextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
+      // Photos/videos in public/media: cache for a day, then refresh in the
+      // background. File names are not versioned, so keep this short.
+      {
+        source: "/media/:file*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
       // Keep the admin area out of search results even if it gets linked.
       { source: "/admin", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
     ];

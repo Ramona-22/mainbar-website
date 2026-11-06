@@ -18,7 +18,8 @@ import {
   deleteDoc,
   doc,
 } from "firebase/firestore";
-import { auth, db } from "../../lib/firebase";
+import { db } from "../../lib/firebase";
+import { auth } from "../../lib/firebaseAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
