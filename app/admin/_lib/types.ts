@@ -2,11 +2,11 @@ export const menuCategories = [
   "FRÜHSTÜCK",
   "GESCHMACKSSACHEN",
   "WINZERFLADEN",
-  "SELBSTGEBACKENES",
   "HEISSGETRÄNKE",
   "ALKOHOLFREI",
   "APERITIF & BIER",
   "WEINE & LONGDRINKS",
+  "SELBSTGEBACKENES",
 ];
 
 export type SizeOption = {

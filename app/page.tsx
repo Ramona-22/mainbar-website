@@ -11,11 +11,11 @@ const menuCategories = [
   "FRÜHSTÜCK",
   "GESCHMACKSSACHEN",
   "WINZERFLADEN",
-  "SELBSTGEBACKENES",
   "HEISSGETRÄNKE",
   "ALKOHOLFREI",
   "APERITIF & BIER",
-  "WEINE & LONGDRINKS"
+  "WEINE & LONGDRINKS",
+  "SELBSTGEBACKENES",
 ];
 
 const defaultTabImages: Record<string, string> = {
