@@ -1,20 +1,12 @@
 import { NextResponse } from "next/server";
-import { validateBooking, escapeHtml } from "../../../lib/bookingValidation";
+import { validateBooking } from "../../../lib/bookingValidation";
 import { checkRateLimit } from "../../../lib/rateLimit";
 import { getClientIp } from "../../../lib/clientIp";
 import { getMailer } from "../../../lib/mailer";
 import { isJsonRequest } from "../../../lib/clientIp";
 import { getAdminDb } from "../../../lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
-
-// The customer confirmation goes to an address the visitor typed in, so it
-// must not repeat any free text they entered (city, state, phone): otherwise
-// the form could be used to send phishing text from MainBar's Gmail account.
-const SEATING_LABELS: Record<string, string> = {
-  inside: "Innenbereich",
-  outside: "Außenbereich",
-  catering: "Catering",
-};
+import { guestConfirmation, ownerAlert } from "../../../lib/emailTemplates";
 
 // "not-configured": GMAIL_USER / GMAIL_APP_PASSWORD missing on the server.
 // "login-rejected": Gmail refused the account or app password.
@@ -92,46 +84,23 @@ export async function POST(request: Request) {
       stored = true;
     }
 
-    const safeDate = escapeHtml(date);
-    const safeSeating = escapeHtml(seating);
-    const safeState = escapeHtml(state);
-    const safeCity = escapeHtml(city);
-    const safePhone = escapeHtml(phone);
-    const safeEmail = escapeHtml(email);
+    // Styled emails (lib/emailTemplates.ts). The guest copy repeats no free text.
+    const mailData = { seating, guests, date, state, city, phone, email };
+    const guestMail = guestConfirmation(mailData);
+    const ownerMail = ownerAlert(mailData);
 
-    // 1. Thank You Email to Customer
     const customerMailOptions = (ownerAddress: string) => ({
       from: `"MainBar Schweinfurt" <${ownerAddress}>`,
       to: email,
-      subject: "Ihre Anfrage bei MainBar Event & Catering",
-      html: `
-        <div style="font-family: sans-serif; color: #353941; padding: 20px;">
-          <h2>Vielen Dank für Ihre Anfrage!</h2>
-          <p>Wir haben Ihre Event-Anfrage für den <b>${safeDate}</b> (${guests} Personen) erhalten.</p>
-          <p><b>Bereich:</b> ${SEATING_LABELS[seating]}</p>
-          <br/>
-          <p>Unser Team prüft aktuell die Verfügbarkeit und meldet sich in Kürze bei Ihnen.</p>
-          <p><i>Ihr MainBar Team</i></p>
-        </div>
-      `,
+      ...guestMail,
     });
 
-    // 2. Alert Email to Owner
+    // Reply-To is the guest, so "Antworten" in the owner's mail app writes to them.
     const ownerMailOptions = (ownerAddress: string) => ({
       from: `"MainBar Website" <${ownerAddress}>`,
       to: ownerAddress,
-      subject: `Neue Event-Anfrage: ${safeDate} (${guests} Personen)`,
-      html: `
-        <div style="font-family: sans-serif; color: #353941; padding: 20px;">
-          <h2>Neue Catering / Event Anfrage</h2>
-          <p><b>Datum:</b> ${safeDate}</p>
-          <p><b>Gäste:</b> ${guests}</p>
-          <p><b>Sitzplatz:</b> ${safeSeating}</p>
-          <p><b>Ort:</b> ${safeCity}, ${safeState}</p>
-          <p><b>Telefon:</b> ${safePhone}</p>
-          <p><b>Email:</b> ${safeEmail}</p>
-        </div>
-      `,
+      replyTo: email,
+      ...ownerMail,
     });
 
     // Send both emails simultaneously. If the booking is already stored, a mail
