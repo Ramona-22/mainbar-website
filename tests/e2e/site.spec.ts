@@ -174,3 +174,39 @@ test.describe("Legal pages", () => {
     await expect(main).not.toContainText("[Vor- und Nachname");
   });
 });
+
+test.describe("Language", () => {
+  test("DE/EN switch translates the page and is remembered", async ({ page }) => {
+    await returningVisitor(page);
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: "Zur Speisekarte" })).toBeVisible();
+
+    await page.getByRole("button", { name: "English" }).click();
+    await expect(page.getByRole("button", { name: "View menu" })).toBeVisible();
+    await expect(page.locator("#menu-section").getByRole("button", { name: "HOMEMADE BAKES" })).toBeVisible();
+    await expect(page).toHaveTitle(/Breakfast, Wine & Events/);
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+
+    await page.goto("/impressum");
+    await expect(page.locator("main")).toContainText("Only the German version is legally binding");
+
+    await page.getByRole("button", { name: "Deutsch" }).click();
+    await expect(page.locator("main")).toContainText("Angaben gemäß § 5 DDG");
+  });
+});
+
+test.describe("Reviews", () => {
+  test("each approved review replaces one example review", async ({ page }) => {
+    await addDoc("reviews", { author: "Echte Anna", text: "Wirklich toll hier!", rating: 5, approved: true, createdAt: new Date() });
+    await addDoc("reviews", { author: "Echter Ben", text: "Sehr lecker.", rating: 4, approved: true, createdAt: new Date() });
+    await addDoc("reviews", { author: "Nicht Freigegeben", text: "Noch geheim.", rating: 5, approved: false, createdAt: new Date() });
+    await returningVisitor(page);
+    await page.goto("/");
+    const slider = page.getByText("Das sagen unsere Gäste").locator("xpath=ancestor::section");
+    await expect(slider.getByText("Echte Anna")).toBeVisible();
+    await expect(slider.getByText("Echter Ben")).toBeVisible();
+    await expect(slider.getByText("Nicht Freigegeben")).toHaveCount(0);
+    // 2 real + 3 examples = 5 cards.
+    await expect(slider.locator(".snap-center")).toHaveCount(5);
+  });
+});

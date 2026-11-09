@@ -50,6 +50,9 @@ export type MenuItem = {
   category?: string;
   name?: string;
   description?: string;
+  // Optional English texts for the EN version of the homepage.
+  name_en?: string;
+  description_en?: string;
   price?: string;
   image_url?: string;
   isExtra?: boolean | string;
@@ -62,6 +65,8 @@ export type MenuForm = {
   category: string;
   name: string;
   description: string;
+  name_en: string;
+  description_en: string;
   price: string;
   image_url: string;
   isExtra: boolean;
@@ -72,6 +77,8 @@ export const emptyMenuForm = (): MenuForm => ({
   category: menuCategories[0],
   name: "",
   description: "",
+  name_en: "",
+  description_en: "",
   price: "",
   image_url: "",
   isExtra: false,

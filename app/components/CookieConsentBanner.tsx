@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useCookieConsent } from "../context/CookieConsentContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function CookieConsentBanner() {
   const { showBanner, consent, acknowledge, openSettings, closeBanner } = useCookieConsent();
+  const { L, lang } = useLanguage();
 
   // The homepage footer opens the notice through this event.
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function CookieConsentBanner() {
           <button
             type="button"
             onClick={closeBanner}
-            aria-label="Schließen"
+            aria-label={L("Schließen", "Close")}
             className="absolute top-4 right-5 text-2xl text-gray-400 hover:text-black"
           >
             ×
@@ -49,30 +51,34 @@ export default function CookieConsentBanner() {
         )}
         <div className="p-6 md:p-8">
           <h2 id="cookie-consent-title" className="font-serif text-xl md:text-2xl text-[#2d2d2d] mb-3 pr-8">
-            Cookie-Einstellungen
+            {L("Cookie-Einstellungen", "Cookie settings")}
           </h2>
 
           <p id="cookie-consent-text" className="text-sm text-[#6b6b6b] leading-relaxed mb-5">
-            Wir verwenden keine Tracking-, Analyse- oder Werbe-Cookies. Gespeichert wird nur Ihre
-            Auswahl, damit dieser Hinweis nicht bei jedem Besuch erneut erscheint.
+            {L(
+              "Wir verwenden keine Tracking-, Analyse- oder Werbe-Cookies. Gespeichert wird nur Ihre Auswahl, damit dieser Hinweis nicht bei jedem Besuch erneut erscheint.",
+              "We do not use tracking, analytics or advertising cookies. We only store your choice so that this notice does not appear on every visit."
+            )}
           </p>
 
           <label className="flex items-start gap-3 mb-6">
             <input type="checkbox" checked disabled className="mt-1 w-4 h-4 accent-[#cda1b1]" />
             <span>
               <span className="block text-xs font-bold uppercase tracking-widest text-[#cda1b1] mb-1">
-                Notwendig (immer aktiv)
+                {L("Notwendig (immer aktiv)", "Necessary (always active)")}
               </span>
               <span className="block text-xs text-[#6b6b6b]">
-                Speichert Ihre Auswahl im Browser (Local Storage) und als anonymen Nachweis (zufällige ID,
-                Version, Zeitpunkt) in unserer Datenbank. Keine Weitergabe an Dritte.
+                {L(
+                  "Speichert Ihre Auswahl im Browser (Local Storage) und als anonymen Nachweis (zufällige ID, Version, Zeitpunkt) in unserer Datenbank. Keine Weitergabe an Dritte.",
+                  "Stores your choice in your browser (local storage) and as anonymous proof (random ID, version, time) in our database. Not shared with third parties."
+                )}
               </span>
             </span>
           </label>
 
           {consent && (
             <p className="text-xs text-[#6b6b6b] mb-4" role="status">
-              Gespeichert am {new Date(consent.savedAt).toLocaleString("de-DE")} · ID{" "}
+              {L("Gespeichert am", "Saved on")} {new Date(consent.savedAt).toLocaleString(lang === "en" ? "en-GB" : "de-DE")} · ID{" "}
               <span className="font-mono">{consent.consentId.slice(0, 8)}</span>
             </p>
           )}
@@ -81,13 +87,13 @@ export default function CookieConsentBanner() {
             onClick={acknowledge}
             className="w-full py-3 rounded-full font-bold uppercase tracking-widest text-[10px] bg-[#353941] text-white hover:bg-[#2a2d33] transition-colors"
           >
-            {consent ? "Auswahl erneut speichern" : "Verstanden"}
+            {consent ? L("Auswahl erneut speichern", "Save choice again") : L("Verstanden", "Got it")}
           </button>
 
           <p className="text-center text-xs text-[#6b6b6b] mt-4">
-            Mehr dazu in unserer{" "}
+            {L("Mehr dazu in unserer", "More in our")}{" "}
             <Link href="/datenschutz" className="text-[#b5788f] underline underline-offset-2">
-              Datenschutzerklärung
+              {L("Datenschutzerklärung", "privacy policy")}
             </Link>
             .
           </p>

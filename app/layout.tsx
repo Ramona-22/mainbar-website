@@ -7,6 +7,8 @@ import LegalFooter from "./components/LegalFooter";
 import { siteUrl } from "./siteUrl";
 import { introSeenScript } from "./components/intro/introSeen";
 import BeanIntro from "./components/intro/BeanIntro";
+import { LanguageProvider } from "./context/LanguageContext";
+import LanguageSwitch from "./components/LanguageSwitch";
 
 // Optimize fonts for faster mobile loading
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -93,12 +95,15 @@ export default function RootLayout({
           }}
         />
         {/* Outside app/template.tsx: its perspective would stop the overlay from being fixed to the screen. */}
-        <BeanIntro />
-        <CookieConsentProvider>
-          {children}
-          <LegalFooter />
-          <CookieConsentBanner />
-        </CookieConsentProvider>
+        <LanguageProvider>
+          <BeanIntro />
+          <CookieConsentProvider>
+            {children}
+            <LanguageSwitch />
+            <LegalFooter />
+            <CookieConsentBanner />
+          </CookieConsentProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

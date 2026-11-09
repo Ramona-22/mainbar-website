@@ -109,6 +109,35 @@ export default function MenuEditorModal({ editor }: { editor: MenuEditorState })
                 />
               </div>
 
+              <details className="rounded-2xl border border-gray-200 p-4" open={!!(menuForm.name_en || menuForm.description_en)}>
+                <summary className="cursor-pointer text-[10px] uppercase tracking-widest text-[#a0a0a0]">
+                  Englische Version (optional)
+                </summary>
+                <p className="text-xs text-[#a0a0a0] mt-2 mb-3">
+                  Wird angezeigt, wenn Gäste die Website auf Englisch stellen. Leer lassen = deutscher Text.
+                </p>
+                <label htmlFor="menu-name-en" className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
+                  Name (Englisch)
+                </label>
+                <input
+                  id="menu-name-en"
+                  type="text"
+                  value={menuForm.name_en}
+                  onChange={(e) => setMenuForm({ ...menuForm, name_en: e.target.value })}
+                  className="w-full border-b border-gray-200 py-2 mb-4 focus:outline-none focus:border-[#cda1b1]"
+                />
+                <label htmlFor="menu-description-en" className="text-[10px] uppercase tracking-widest text-[#a0a0a0] block mb-1">
+                  Beschreibung (Englisch)
+                </label>
+                <textarea
+                  id="menu-description-en"
+                  rows={2}
+                  value={menuForm.description_en}
+                  onChange={(e) => setMenuForm({ ...menuForm, description_en: e.target.value })}
+                  className="w-full border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] resize-none"
+                />
+              </details>
+
               <div className="border border-gray-200 rounded-2xl p-4">
                 <div className="flex justify-between items-center mb-3">
                   <label className="text-[10px] uppercase tracking-widest text-[#a0a0a0]">

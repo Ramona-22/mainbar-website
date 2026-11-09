@@ -37,6 +37,20 @@ const SEATING: Record<BookingMailData["seating"], string> = {
   outside: "Außenbereich",
   catering: "Externes Catering",
 };
+const SEATING_EN: Record<BookingMailData["seating"], string> = {
+  inside: "Indoors",
+  outside: "Outdoor area",
+  catering: "External catering",
+};
+
+export type MailLang = "de" | "en";
+
+/** "2026-12-20" -> "Sunday, 20 December 2026" */
+function formatEnglishDate(date: string) {
+  const d = new Date(`${date}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return date;
+  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
 
 /** "2026-12-20" -> "Sonntag, 20. Dezember 2026" */
 export function formatGermanDate(date: string) {
@@ -58,10 +72,10 @@ const guestsLabel = (n: number) => `${n} ${n === 1 ? "Person" : "Personen"}`;
 /* ------------------------------------------------------------------ */
 
 /** The dark card every email is wrapped in: name, heading, body and the address. */
-function emailLayout(heading: string, body: string) {
+function emailLayout(heading: string, body: string, lang: MailLang = "de") {
   const footer = "Spitalstraße 19, 97421 Schweinfurt · +49 170 2278096";
   return `<!doctype html>
-<html lang="de">
+<html lang="${lang}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MainBar</title></head>
 <body style="margin:0;background:${colors.page};font-family:Georgia,'Times New Roman',serif;color:${colors.text}">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${colors.page};padding:32px 12px">
@@ -75,8 +89,8 @@ function emailLayout(heading: string, body: string) {
         <tr><td style="padding:16px 32px 26px;font-size:12px;color:${colors.muted};border-top:1px solid ${colors.divider}">${footer}<br>
           <a href="${SITE}" style="color:${colors.muted}">mainbarsw.de</a> ·
           <a href="https://www.instagram.com/mainbar_sw/" style="color:${colors.muted}">Instagram</a> ·
-          <a href="${SITE}/impressum" style="color:${colors.muted}">Impressum</a> ·
-          <a href="${SITE}/datenschutz" style="color:${colors.muted}">Datenschutz</a>
+          <a href="${SITE}/impressum" style="color:${colors.muted}">${lang === "en" ? "Legal notice" : "Impressum"}</a> ·
+          <a href="${SITE}/datenschutz" style="color:${colors.muted}">${lang === "en" ? "Privacy" : "Datenschutz"}</a>
         </td></tr>
       </table>
     </td></tr>
@@ -116,7 +130,8 @@ const link = (href: string, text: string) =>
 /*  Guest confirmation                                                  */
 /* ------------------------------------------------------------------ */
 
-export function guestConfirmation(b: BookingMailData) {
+export function guestConfirmation(b: BookingMailData, lang: MailLang = "de") {
+  if (lang === "en") return guestConfirmationEn(b);
   const date = formatGermanDate(b.date);
   const guests = guestsLabel(b.guests);
   const area = SEATING[b.seating];
@@ -156,6 +171,48 @@ export function guestConfirmation(b: BookingMailData) {
   return {
     subject: "Ihre Anfrage bei MainBar ist eingegangen",
     html: emailLayout("Vielen Dank für Ihre Anfrage", body),
+    text,
+  };
+}
+
+function guestConfirmationEn(b: BookingMailData) {
+  const date = formatEnglishDate(b.date);
+  const guests = `${b.guests} ${b.guests === 1 ? "guest" : "guests"}`;
+  const area = SEATING_EN[b.seating];
+
+  let body = paragraph("We have received your request and are checking availability.");
+  body += detailsTable([
+    ["Date", date],
+    ["Guests", guests],
+    ["Area", area],
+  ]);
+  body += paragraph("We will get back to you personally very soon.");
+  body += button(`${SITE}/#menu-section`, "View our menu");
+  body += paragraph(
+    "Opening hours: Tue–Sat 9:30 am–6:00 pm · Sun & public holidays 10:00 am–6:00 pm · closed on Mondays",
+    `margin-top:22px;font-size:13px;color:${colors.muted}`
+  );
+  body += paragraph("Your MainBar team", `margin-top:22px;color:${colors.muted}`);
+
+  const text = [
+    "Thank you for your request at MainBar!",
+    "",
+    `Date: ${date}`,
+    `Guests: ${guests}`,
+    `Area: ${area}`,
+    "",
+    "We are checking availability and will get back to you personally very soon.",
+    "",
+    "Opening hours: Tue–Sat 9:30 am–6:00 pm, Sun & public holidays 10:00 am–6:00 pm, closed on Mondays",
+    "",
+    "Your MainBar team",
+    "Spitalstraße 19, 97421 Schweinfurt, Germany · +49 170 2278096",
+    SITE,
+  ].join("\n");
+
+  return {
+    subject: "Your request at MainBar has been received",
+    html: emailLayout("Thank you for your request", body, "en"),
     text,
   };
 }

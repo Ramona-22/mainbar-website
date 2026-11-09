@@ -40,6 +40,8 @@ export function useMenuEditor() {
         name: menuForm.name.trim(),
         price: menuForm.price.trim(),
         description: menuForm.description.trim(),
+        name_en: menuForm.name_en.trim(),
+        description_en: menuForm.description_en.trim(),
         sizes: cleanedSizes.length > 0 ? cleanedSizes : null,
       };
 
@@ -71,6 +73,8 @@ export function useMenuEditor() {
       category: item.category || menuCategories[0],
       name: item.name || "",
       description: item.description || "",
+      name_en: item.name_en || "",
+      description_en: item.description_en || "",
       price: item.price || "",
       image_url: item.image_url || "",
       isExtra: isExtraItem(item.isExtra),

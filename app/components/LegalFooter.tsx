@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCookieConsent } from "../context/CookieConsentContext";
+import { useLanguage } from "../context/LanguageContext";
 
 // Impressum and Datenschutz must be reachable from every page (§ 5 DDG), and
 // cookie consent must be as easy to withdraw as to give. The homepage has its
@@ -10,6 +11,7 @@ import { useCookieConsent } from "../context/CookieConsentContext";
 export default function LegalFooter() {
   const pathname = usePathname();
   const { openSettings } = useCookieConsent();
+  const { L } = useLanguage();
 
   if (pathname === "/" || pathname.startsWith("/admin")) return null;
 
@@ -19,13 +21,13 @@ export default function LegalFooter() {
   return (
     <footer className="w-full bg-[#faf8f5] border-t border-gray-200/70 px-6 py-5">
       <nav
-        aria-label="Rechtliches"
+        aria-label={L("Rechtliches", "Legal")}
         className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-6"
       >
-        <Link href="/impressum" className={linkClass}>Impressum</Link>
-        <Link href="/datenschutz" className={linkClass}>Datenschutz</Link>
+        <Link href="/impressum" className={linkClass}>{L("Impressum", "Legal notice")}</Link>
+        <Link href="/datenschutz" className={linkClass}>{L("Datenschutz", "Privacy")}</Link>
         <button type="button" onClick={openSettings} className={`${linkClass} cursor-pointer`}>
-          Cookie-Einstellungen
+          {L("Cookie-Einstellungen", "Cookie settings")}
         </button>
       </nav>
     </footer>

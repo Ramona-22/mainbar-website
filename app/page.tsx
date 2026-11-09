@@ -6,6 +6,8 @@ import { useState, useEffect, useRef } from "react";
 import { preload } from "react-dom";
 import { motion, AnimatePresence, animate } from "framer-motion";
 import { compareMenuItems, isExtraItem } from "../lib/menuOrder";
+import { localizeMenuItem, menuTabLabelsEn } from "../lib/menuTranslations";
+import { useLanguage } from "./context/LanguageContext";
 
 const menuCategories = [
   "FRÜHSTÜCK",
@@ -29,17 +31,31 @@ const defaultTabImages: Record<string, string> = {
 };
 
 // Short introductions shown at the top of a menu tab (above any items from /admin).
-const tabIntros: Record<string, { eyebrow: string; title: string; text: string[] }> = {
+type TabIntro = { eyebrow: string; title: string; text: string[] };
+const tabIntros: Record<string, { de: TabIntro; en: TabIntro }> = {
   "SELBSTGEBACKENES": {
+    en: {
+      eyebrow: "From our bakery",
+      title: "Baked by hand, with love",
+      text: [
+        "Our cakes, tarts and pastries are made by hand – fresh every day and with great attention to detail. Sometimes fruity and light, sometimes rich and chocolatey, sometimes timelessly classic, sometimes surprisingly new: flavours, styles and decorations change with the seasons and our ideas.",
+        "The best way to discover what is waiting for you today is right at our counter. Drop by and taste your way through – we look forward to seeing you.",
+      ],
+    },
+    de: {
     eyebrow: "Aus unserer Backstube",
     title: "Mit Liebe selbst gebacken",
     text: [
       "Torten, Kuchen und feines Gebäck entstehen bei uns von Hand – jeden Tag frisch und mit viel Liebe zum Detail. Mal fruchtig und leicht, mal schokoladig und zart, mal ganz klassisch, mal überraschend neu: Geschmack, Stil und Verzierung wechseln mit der Saison und unseren Ideen.",
       "Welche Köstlichkeiten heute auf Sie warten, entdecken Sie am schönsten direkt bei uns in der Vitrine. Kommen Sie vorbei und probieren Sie sich durch – wir freuen uns auf Sie.",
     ],
+    },
   },
 };
 
+// Example reviews fill the review slider only until real ones exist: each approved
+// guest review replaces one example, until REVIEW_SLOTS real reviews are shown.
+const REVIEW_SLOTS = 5;
 const fallbackReviews = [
   {
     id: "1",
@@ -73,6 +89,14 @@ const fallbackReviews = [
   }
 ];
 
+const fallbackReviewsEn: typeof fallbackReviews = [
+  { id: "1", author: "Lisa K.", rating: 5, text: "Such a lovely café! The coffee is incredibly good and the Winzerfladen are a dream. I love coming here on my lunch break." },
+  { id: "2", author: "Markus T.", rating: 4, text: "Really cool interior and very friendly staff. The avocado sandwich was amazing – at the weekend it's best to book ahead." },
+  { id: "3", author: "Julia S.", rating: 5, text: "My absolute favourite place in Schweinfurt for an Aperol Spritz after work. Wonderful atmosphere!" },
+  { id: "4", author: "Timo W.", rating: 5, text: "The breakfast for two is really fairly priced and more than filling. Served with so much care." },
+  { id: "5", author: "Sophie M.", rating: 4, text: "Very relaxed atmosphere. Perfect for unwinding. The homemade lemonade is highly recommended." },
+];
+
 const acrosticPoem = [
   { letter: "L", rest: "EBENSTRAUM" },
   { letter: "E", rest: "INZIGARTIG" },
@@ -86,6 +110,22 @@ const acrosticPoem = [
   { letter: "A", rest: "NDERS" },
   { letter: "F", rest: "AMILIENBETRIEB" },
   { letter: "T", rest: "ALENTSCHMIEDE" }
+];
+
+// "Leidenschaft" means passion; the English words keep its initials.
+const acrosticPoemEn = [
+  { letter: "L", rest: "IVING THE DREAM" },
+  { letter: "E", rest: "XCEPTIONAL" },
+  { letter: "I", rest: "NCREDIBLY FRESH" },
+  { letter: "D", rest: "ELICIOUS COFFEE" },
+  { letter: "E", rest: "XPERT RECIPES" },
+  { letter: "N", rest: "ATURALLY SUSTAINABLE" },
+  { letter: "S", rest: "CRATCH-BAKED" },
+  { letter: "C", rest: "HARISMATIC" },
+  { letter: "H", rest: "EARTFELT WELCOME" },
+  { letter: "A", rest: "LWAYS DIFFERENT" },
+  { letter: "F", rest: "AMILY-RUN" },
+  { letter: "T", rest: "ALENT FORGE" }
 ];
 
 type MenuSize = { label?: string; price: string | number };
@@ -189,6 +229,7 @@ const BackgroundVideo = ({
 };
 
 export default function UnifiedHomePage() {
+  const { L, lang } = useLanguage();
   const [activeTab, setActiveTab] = useState(menuCategories[0]);
   const [firestoreMenuData, setFirestoreMenuData] = useState<MenuItem[]>([]);
   const currentMenuImage = defaultTabImages[activeTab] || null;
@@ -264,18 +305,18 @@ export default function UnifiedHomePage() {
                     typeof r.text === "string" &&
                     typeof r.author === "string"
                 );
-              setReviews(shuffleArray(fetchedReviews.length > 0 ? fetchedReviews : fallbackReviews));
+              setReviews(shuffleArray(fetchedReviews));
             },
             (error) => {
               console.error("Reviews could not be loaded:", error);
-              setReviews(shuffleArray(fallbackReviews));
+              setReviews([]);
             }
           )
         );
       })
       .catch((error) => {
         console.error("Menu/reviews could not be loaded:", error);
-        setReviews(shuffleArray(fallbackReviews));
+        setReviews([]);
       });
 
     return () => {
@@ -298,13 +339,24 @@ export default function UnifiedHomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Sorted on the German names (the saved order), then shown in the visitor's language.
   const mainItems = firestoreMenuData
     .filter((item) => item.category === activeTab && !isExtraItem(item.isExtra))
-    .sort(compareMenuItems);
+    .sort(compareMenuItems)
+    .map((item) => localizeMenuItem(item, lang));
 
   const activeExtras = firestoreMenuData
     .filter((item) => item.category === activeTab && isExtraItem(item.isExtra))
-    .sort(compareMenuItems);
+    .sort(compareMenuItems)
+    .map((item) => localizeMenuItem(item, lang));
+  const intro = tabIntros[activeTab]?.[lang];
+  // Real reviews first; examples only fill the slots that are still free.
+  const examples = lang === "en" ? fallbackReviewsEn : fallbackReviews;
+  const shownReviews = [
+    ...reviews,
+    ...examples.slice(0, Math.max(0, REVIEW_SLOTS - reviews.length)).map((r) => ({ ...r, id: `example-${r.id}` })),
+  ];
+  const acrostic = lang === "en" ? acrosticPoemEn : acrosticPoem;
 
   const scrollToMenu = () => {
     const menuSection = document.getElementById("menu-section");
@@ -322,7 +374,7 @@ export default function UnifiedHomePage() {
     e.preventDefault();
     
     if (!gdprConsent) {
-      alert("Bitte stimmen Sie der Datenschutzerklärung zu, um die Bewertung abzusenden.");
+      alert(L("Bitte stimmen Sie der Datenschutzerklärung zu, um die Bewertung abzusenden.", "Please accept the privacy policy to submit your review."));
       return;
     }
     
@@ -332,10 +384,10 @@ export default function UnifiedHomePage() {
       await submitReview(reviewForm);
       setIsReviewFormOpen(false);
       setReviewForm({ author: "", text: "", rating: 5 });
-      alert("Vielen Dank für deine Bewertung! Sie erscheint nach einer kurzen Prüfung auf der Website.");
+      alert(L("Vielen Dank für deine Bewertung! Sie erscheint nach einer kurzen Prüfung auf der Website.", "Thank you for your review! It will appear on the website after a short check."));
     } catch (error) {
       console.error("Fehler beim Speichern der Bewertung:", error);
-      alert("Es gab ein Problem. Bitte versuche es später nochmal.");
+      alert(L("Es gab ein Problem. Bitte versuche es später nochmal.", "Something went wrong. Please try again later."));
     } finally {
       setIsSubmitting(false);
     }
@@ -372,7 +424,7 @@ export default function UnifiedHomePage() {
           className="flex items-center gap-2 bg-[#1c1a1d]/80 backdrop-blur-md border border-[#cda1b1]/30 text-white px-5 py-3 rounded-full shadow-2xl hover:bg-[#cda1b1] hover:text-[#1c1a1d] transition-all duration-500 group"
         >
           <span className="text-[#cda1b1] group-hover:text-[#1c1a1d] text-lg leading-none transition-colors">★</span>
-          <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase mt-0.5">Bewerte uns</span>
+          <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase mt-0.5">{L("Bewerte uns", "Rate us")}</span>
         </button>
 
         <AnimatePresence>
@@ -385,8 +437,8 @@ export default function UnifiedHomePage() {
               className="absolute top-full left-0 mt-4 w-[calc(100vw-3rem)] max-w-85 bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 origin-top-left"
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-serif text-xl text-[#2d2d2d]">Wie war dein Besuch?</h3>
-                <button onClick={() => setIsReviewFormOpen(false)} className="text-gray-400 hover:text-red-500 text-xl font-bold">×</button>
+                <h3 className="font-serif text-xl text-[#2d2d2d]">{L("Wie war dein Besuch?", "How was your visit?")}</h3>
+                <button onClick={() => setIsReviewFormOpen(false)} aria-label={L("Schließen", "Close")} className="text-gray-400 hover:text-red-500 text-xl font-bold">×</button>
               </div>
 
               <form onSubmit={handleReviewSubmit} className="space-y-4">
@@ -410,11 +462,11 @@ export default function UnifiedHomePage() {
                     type="text"
                     required
                     maxLength={80}
-                    aria-label="Dein Vorname"
+                    aria-label={L("Dein Vorname", "Your first name")}
                     value={reviewForm.author}
                     onChange={(e) => setReviewForm({ ...reviewForm, author: e.target.value })}
                     className="border-b border-gray-200 py-1.5 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] text-base md:text-xs"
-                    placeholder="Dein Vorname"
+                    placeholder={L("Dein Vorname", "Your first name")}
                   />
                 </div>
 
@@ -423,11 +475,11 @@ export default function UnifiedHomePage() {
                     rows={3}
                     required
                     maxLength={1000}
-                    aria-label="Deine Bewertung"
+                    aria-label={L("Deine Bewertung", "Your review")}
                     value={reviewForm.text}
                     onChange={(e) => setReviewForm({ ...reviewForm, text: e.target.value })}
                     className="border-b border-gray-200 py-1.5 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] text-base md:text-xs resize-none"
-                    placeholder="Deine Bewertung"
+                    placeholder={L("Deine Bewertung", "Your review")}
                   />
                 </div>
 
@@ -441,7 +493,10 @@ export default function UnifiedHomePage() {
                     className="mt-1 w-4 h-4 accent-[#cda1b1] border-gray-300 rounded"
                   />
                   <label htmlFor="reviewGdprConsent" className="text-xs text-[#a0a0a0] leading-relaxed">
-                    Ich habe die <a href="/datenschutz" className="text-[#cda1b1] hover:underline">Datenschutzerklärung</a> gelesen und stimme der Veröffentlichung meines Vornamens, der Bewertung und des Textes zu. (Art. 6 Abs. 1 lit. a DSGVO)
+                    {L(
+                      <>Ich habe die <a href="/datenschutz" className="text-[#cda1b1] hover:underline">Datenschutzerklärung</a> gelesen und stimme der Veröffentlichung meines Vornamens, der Bewertung und des Textes zu. (Art. 6 Abs. 1 lit. a DSGVO)</>,
+                      <>I have read the <a href="/datenschutz" className="text-[#cda1b1] hover:underline">privacy policy</a> and agree to the publication of my first name, rating and text. (Art. 6(1)(a) GDPR)</>
+                    )}
                   </label>
                 </div>
 
@@ -450,7 +505,7 @@ export default function UnifiedHomePage() {
                   disabled={isSubmitting}
                   className="w-full mt-2 bg-[#cda1b1] hover:bg-[#ebd2db] text-[#353941] py-3 rounded-full font-bold uppercase tracking-widest text-[10px] transition-colors disabled:opacity-50"
                 >
-                  {isSubmitting ? "Wird gesendet..." : "Absenden"}
+                  {isSubmitting ? L("Wird gesendet...", "Sending...") : L("Absenden", "Submit")}
                 </button>
               </form>
             </motion.div>
@@ -497,7 +552,7 @@ export default function UnifiedHomePage() {
               style={{ animationDelay: "0.3s" }}
               className="hero-fade text-white tracking-[0.25em] pl-[0.25em] uppercase text-base md:text-lg font-medium mt-10 mb-10 drop-shadow-md text-center"
             >
-              Café & Bistro
+              {L("Café & Bistro", "Café & Bistro")}
             </h2>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full">
@@ -508,14 +563,14 @@ export default function UnifiedHomePage() {
                 whileTap={{ scale: 0.97 }}
                 className="hero-fade-up bg-[#cda1b1] text-[#1c1a1d] px-12 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-all duration-400 shadow-lg"
               >
-                Zur Speisekarte
+                {L("Zur Speisekarte", "View menu")}
               </motion.button>
 
               <Link
                 href="/booking"
                 className="text-white hover:text-[#cda1b1] uppercase tracking-widest text-sm transition-colors border-b border-white/50 hover:border-[#cda1b1] pb-1 drop-shadow-md text-center"
               >
-                Event & Catering Buchen
+                {L("Event & Catering Buchen", "Book events & catering")}
               </Link>
             </div>
           </div>
@@ -530,15 +585,16 @@ export default function UnifiedHomePage() {
               className="hero-fade-up relative z-10 w-[70%] mx-auto px-6"
             >
               <p className="font-serif italic text-3xl text-white text-center leading-snug mb-6 drop-shadow-md">
-                „Bei uns ist Qualität das Produkt
-                <br />
-                der Liebe zum Detail.“
+                {L(
+                  <>„Bei uns ist Qualität das Produkt<br />der Liebe zum Detail.“</>,
+                  <>“For us, quality is the product<br />of love for detail.”</>
+                )}
               </p>
 
               <div className="w-12 h-px bg-[#cda1b1]/70 mx-auto mb-6"></div>
 
               <div className="flex flex-col gap-3">
-                {acrosticPoem.map((line, index) => (
+                {acrostic.map((line, index) => (
                   <div key={index} className="flex items-center gap-3">
                     <span className="font-serif text-2xl font-medium text-[#cda1b1] w-7 text-right drop-shadow-md shrink-0">
                       {line.letter}
@@ -559,7 +615,7 @@ export default function UnifiedHomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10 md:mb-16 px-6">
             <h2 className="font-serif text-4xl md:text-5xl text-[#2d2d2d] mb-4">
-              Das sagen unsere Gäste
+              {L("Das sagen unsere Gäste", "What our guests say")}
             </h2>
             <div className="flex justify-center items-center gap-2 text-base text-[#a0a0a0] mb-6 font-bold tracking-widest uppercase">
               <span className="text-[#cda1b1]">★★★★★</span>
@@ -572,7 +628,7 @@ export default function UnifiedHomePage() {
             ref={sliderRef}
             className="flex gap-6 overflow-x-auto hide-scrollbar snap-x snap-mandatory px-6 md:px-12 pb-8 scroll-smooth"
           >
-            {reviews.map((review) => (
+            {shownReviews.map((review) => (
               <div
                 key={review.id}
                 className="snap-center shrink-0 w-70 md:w-87.5 bg-white p-8 rounded-3xl border border-[#cda1b1]/20 shadow-sm flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300"
@@ -653,7 +709,7 @@ export default function UnifiedHomePage() {
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="text-center mb-10 md:mb-16">
             <h2 className="font-serif text-4xl md:text-5xl text-[#2d2d2d] mb-4 md:mb-6">
-              Main Menü
+              {L("Main Menü", "Main Menu")}
             </h2>
             <div className="w-12 h-px bg-[#cda1b1] mx-auto"></div>
           </div>
@@ -674,7 +730,7 @@ export default function UnifiedHomePage() {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                <span className="relative z-10">{tab}</span>
+                <span className="relative z-10">{lang === "en" ? menuTabLabelsEn[tab] ?? tab : tab}</span>
               </button>
             ))}
           </div>
@@ -700,7 +756,7 @@ export default function UnifiedHomePage() {
 className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_80%] overflow-hidden shadow-xl border-4 border-white z-20 pointer-events-none"                >
                   <Image
                     src={currentMenuImage}
-                    alt={`${activeTab} Highlight`}
+                    alt={lang === "en" ? menuTabLabelsEn[activeTab] ?? activeTab : activeTab}
                     fill
                     sizes="(max-width: 768px) 0vw, 200px"
                     className="object-cover"
@@ -709,15 +765,15 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
               )}
 
               <div className="relative z-10 w-full md:w-3/4 pr-0 md:pr-8">
-                {tabIntros[activeTab] && (
+                {intro && (
                   <div className="mb-10 md:mb-12 max-w-2xl">
                     <p className="text-xs uppercase tracking-[0.25em] text-[#b5788f] mb-3">
-                      {tabIntros[activeTab].eyebrow}
+                      {intro.eyebrow}
                     </p>
                     <h3 className="font-serif text-2xl md:text-3xl text-[#2d2d2d] mb-4">
-                      {tabIntros[activeTab].title}
+                      {intro.title}
                     </h3>
-                    {tabIntros[activeTab].text.map((line) => (
+                    {intro.text.map((line) => (
                       <p key={line} className="text-sm md:text-base text-[#6b6b6b] leading-relaxed font-light mb-3">
                         {line}
                       </p>
@@ -725,9 +781,9 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
                   </div>
                 )}
                 {mainItems.length === 0 && activeExtras.length === 0 ? (
-                  tabIntros[activeTab] ? null : (
+                  intro ? null : (
                     <p className="text-[#a0a0a0] text-base py-10 text-center">
-                      Keine Gerichte in dieser Kategorie gefunden.
+                      {L("Keine Gerichte in dieser Kategorie gefunden.", "No dishes in this category yet.")}
                     </p>
                   )
                 ) : (
@@ -791,14 +847,12 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
           <div className="flex flex-col items-center md:items-start">
             <h2 className="font-(family-name:--font-great-vibes) text-5xl text-[#cda1b1] mb-4">MainBar</h2>
             <p className="text-[#a0a0a0] text-sm leading-relaxed text-center md:text-left">
-              Qualität ist das Produkt
-              <br />
-              der Liebe zum Detail.
+              {L(<>Qualität ist das Produkt<br />der Liebe zum Detail.</>, <>Quality is the product<br />of love for detail.</>)}
             </p>
           </div>
 
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <h3 className="text-xs tracking-[0.2em] uppercase text-[#cda1b1] font-bold mb-6">Besuchen Sie uns</h3>
+            <h3 className="text-xs tracking-[0.2em] uppercase text-[#cda1b1] font-bold mb-6">{L("Besuchen Sie uns", "Visit us")}</h3>
             <a href="https://www.google.com/maps/search/?api=1&query=Spitalstra%C3%9Fe%2019%2C%2097421%20Schweinfurt" target="_blank" rel="noopener noreferrer" className="text-base text-gray-300 hover:text-[#cda1b1] mb-3 transition-colors">
               Spitalstraße 19<br />97421 Schweinfurt
             </a>
@@ -808,10 +862,10 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
           </div>
 
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <h3 className="text-xs tracking-[0.2em] uppercase text-[#cda1b1] font-bold mb-6">Öffnungszeiten</h3>
-            <p className="text-base text-gray-300 mb-2">Mo: Ruhetag</p>
-            <p className="text-base text-gray-300 mb-2">Di - Sa: 09:30 - 18:00 Uhr</p>
-            <p className="text-base text-gray-300">Sonn- u. Feiertage: 10:00 - 18:00 Uhr</p>
+            <h3 className="text-xs tracking-[0.2em] uppercase text-[#cda1b1] font-bold mb-6">{L("Öffnungszeiten", "Opening hours")}</h3>
+            <p className="text-base text-gray-300 mb-2">{L("Mo: Ruhetag", "Mon: closed")}</p>
+            <p className="text-base text-gray-300 mb-2">{L("Di - Sa: 09:30 - 18:00 Uhr", "Tue – Sat: 9:30 am – 6:00 pm")}</p>
+            <p className="text-base text-gray-300">{L("Sonn- u. Feiertage: 10:00 - 18:00 Uhr", "Sun & public holidays: 10:00 am – 6:00 pm")}</p>
           </div>
 
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
@@ -832,8 +886,8 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
             © {new Date().getFullYear()} MainBar Schweinfurt
           </p>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 md:gap-x-6">
-            <Link href="/impressum" className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors">Impressum</Link>
-            <Link href="/datenschutz" className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors">Datenschutz</Link>
+            <Link href="/impressum" className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors">{L("Impressum", "Legal notice")}</Link>
+            <Link href="/datenschutz" className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors">{L("Datenschutz", "Privacy")}</Link>
             <button 
               onClick={() => { 
                 const event = new CustomEvent('open-cookie-settings');
@@ -841,11 +895,11 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
               }} 
               className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors cursor-pointer"
             >
-              Cookie-Einstellungen
+              {L("Cookie-Einstellungen", "Cookie settings")}
             </button>
             <button 
               onClick={() => {
-                const email = prompt("Bitte geben Sie Ihre E-Mail-Adresse ein, um einen Löschantrag zu stellen:");
+                const email = prompt(L("Bitte geben Sie Ihre E-Mail-Adresse ein, um einen Löschantrag zu stellen:", "Please enter your email address to request deletion of your data:"));
                 if (email) {
                   fetch("/api/gdpr-delete", {
                     method: "POST",
@@ -853,16 +907,16 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
                     body: JSON.stringify({ email, type: "all" })
                   }).then(res => res.json()).then(data => {
                     if (data.success) {
-                      alert(data.message || "Ihre Daten wurden erfolgreich gelöscht.");
+                      alert(L(data.message || "Ihr Löschantrag ist eingegangen.", "Your deletion request has been received. We will delete your data and confirm by email, within one month at the latest."));
                     } else {
-                      alert(data.error || "Fehler beim Löschen der Daten.");
+                      alert(L(data.error || "Fehler beim Löschen der Daten.", "Please enter a valid email address or try again later."));
                     }
-                  }).catch(() => alert("Fehler bei der Anfrage."));
+                  }).catch(() => alert(L("Fehler bei der Anfrage.", "The request failed. Please try again later.")));
                 }
               }}
               className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors cursor-pointer"
             >
-              Daten löschen
+              {L("Daten löschen", "Delete my data")}
             </button>
           </div>
         </div>

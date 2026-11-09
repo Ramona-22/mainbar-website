@@ -86,7 +86,9 @@ export async function POST(request: Request) {
 
     // Styled emails (lib/emailTemplates.ts). The guest copy repeats no free text.
     const mailData = { seating, guests, date, state, city, phone, email };
-    const guestMail = guestConfirmation(mailData);
+    // The visitor's site language (DE/EN) only picks the guest email's language.
+    const lang = (body as { lang?: unknown }).lang === "en" ? "en" : "de";
+    const guestMail = guestConfirmation(mailData, lang);
     const ownerMail = ownerAlert(mailData);
 
     const customerMailOptions = (ownerAddress: string) => ({

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { introSeen, rememberIntroSeen } from "./introSeen";
+import { useLanguage } from "../../context/LanguageContext";
 
 const noSubscribe = () => () => {};
 // Heavy, weighted ease used for every reveal in the intro.
@@ -24,6 +25,7 @@ export default function BeanIntro() {
   */
   const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
   const reduce = useReducedMotion();
+  const { L } = useLanguage();
   // Rendered from the root layout, but plays on the homepage only.
   const onHome = usePathname() === "/";
   const skipIntro = !onHome || (hydrated && (introSeen() || !!reduce));
@@ -185,7 +187,7 @@ export default function BeanIntro() {
             onClick={skip}
             className="group absolute bottom-6 right-6 flex items-center gap-3 rounded-full bg-white/60 py-1.5 pl-5 pr-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-[#353941] ring-1 ring-[#353941]/10 backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/90 active:scale-[0.98] md:bottom-8 md:right-8"
           >
-            Überspringen
+            {L("Überspringen", "Skip")}
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#cda1b1]/20 text-[#d66a7a] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:scale-105">
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                 <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
