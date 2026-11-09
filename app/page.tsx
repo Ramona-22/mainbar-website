@@ -482,9 +482,9 @@ export default function UnifiedHomePage() {
 
             <h2
               style={{ animationDelay: "0.3s" }}
-              className="hero-fade text-white tracking-[0.25em] uppercase text-base md:text-lg font-medium mt-10 mb-10 drop-shadow-md text-center"
+              className="hero-fade text-white tracking-[0.25em] pl-[0.25em] uppercase text-base md:text-lg font-medium mt-10 mb-10 drop-shadow-md text-center"
             >
-              Café & Patisserie
+              Café & Bistro
             </h2>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full">

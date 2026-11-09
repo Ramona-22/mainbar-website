@@ -166,9 +166,11 @@ export default function BeanIntro() {
                       initial={{ y: "110%" }}
                       animate={{ y: "0%" }}
                       transition={{ delay: 2.2, duration: 1.0, ease }}
-                      className="font-(family-name:--font-playfair) text-[11px] uppercase tracking-[0.42em] text-[#353941]/70"
+                      // pl matches the letter spacing, which adds space after the last letter,
+                      // so the text sits exactly on the centre line under the hairline.
+                      className="pl-[0.42em] text-center font-(family-name:--font-playfair) text-[11px] uppercase tracking-[0.42em] text-[#353941]/70"
                     >
-                      Café &amp; Patisserie · Schweinfurt
+                      Café &amp; Bistro
                     </motion.p>
                   </div>
                 </motion.div>
