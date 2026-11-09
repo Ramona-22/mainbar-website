@@ -17,7 +17,8 @@ const FALL_AT = 4.3; // bean pours down
 const TRACE_AT = 5.3; // dust rises from the line and draws the page
 const TRACE_SPEED = 1 / 1.45; // trace progress per second; complete at 1.25
 const TRACE_END = 1.25;
-const REVEAL_TIME = 0.8; // cream clears, real page shows
+const DUSK_TIME = 0.9; // paper darkens to the page's tone
+const REVEAL_TIME = 0.7; // dark paper dissolves, real page shows
 const FADE_TIME = 0.6; // dust dissolves into the page
 
 function rng(seed: number) {
@@ -146,8 +147,9 @@ const smooth = (x: number) => {
 };
 
 /**
- * Starts the intro on `canvas`. onReady fires after the first frame; onReveal(f) reports how far
- * the real page should show through (0..1); onDone fires when the dust is gone.
+ * Starts the intro on `canvas`. onReady fires after the first frame; onReveal(dusk, reveal) reports
+ * how far the paper has darkened and how far the real page shows through (0..1 each);
+ * onDone fires when the dust is gone.
  * Throws if WebGL is unavailable. Returns a stop function.
  */
 export function startBeanScene(
@@ -156,7 +158,7 @@ export function startBeanScene(
     onReady,
     onReveal,
     onDone,
-  }: { onReady: () => void; onReveal: (fraction: number) => void; onDone: () => void }
+  }: { onReady: () => void; onReveal: (dusk: number, reveal: number) => void; onDone: () => void }
 ): () => void {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -260,22 +262,24 @@ export function startBeanScene(
     if (!traced && t >= FALL_AT) trace();
 
     const tr = Math.max(0, (t - TRACE_AT) * TRACE_SPEED);
-    // The cream starts to clear just before the last grains land.
-    const revealAt = TRACE_AT + TRACE_END / TRACE_SPEED - 0.3;
-    const reveal = smooth((t - revealAt) / REVEAL_TIME);
-    const fade = smooth((t - revealAt - REVEAL_TIME * 0.6) / FADE_TIME);
+    // Lights dim first: the paper turns to the page's dark tone while the grains take on their
+    // real colours; then the dark paper dissolves into the page (dark on dark, no milky wash).
+    const duskAt = TRACE_AT + TRACE_END / TRACE_SPEED - 0.6;
+    const dusk = smooth((t - duskAt) / DUSK_TIME);
+    const reveal = smooth((t - duskAt - DUSK_TIME * 0.8) / REVEAL_TIME);
+    const fade = smooth((t - duskAt - DUSK_TIME * 0.8 - REVEAL_TIME * 0.5) / FADE_TIME);
 
     uniforms.uScatter.value = 1 - smooth(t / GATHER_END);
     uniforms.uFall.value = Math.max(0, t - FALL_AT);
     uniforms.uTrace.value = tr;
-    uniforms.uReveal.value = reveal;
+    uniforms.uReveal.value = dusk;
     uniforms.uFade.value = fade;
     uniforms.uTime.value += delta;
     // The bean turns slowly; it stops once it pours.
     if (t < FALL_AT) spin.rotation.y += delta * 0.35;
 
     renderer.render(scene, camera);
-    onReveal(reveal);
+    onReveal(dusk, reveal);
 
     if (!announced) {
       announced = true;

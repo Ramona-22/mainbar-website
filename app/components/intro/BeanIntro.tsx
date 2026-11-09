@@ -30,6 +30,7 @@ export default function BeanIntro() {
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
+  const paperDecorRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // `leaving` fades the overlay out (skip button or 3D failure); a normal run ends via `done`.
   const [leaving, setLeaving] = useState(false);
@@ -66,11 +67,18 @@ export default function BeanIntro() {
             clearTimeout(fallback);
             setReady(true);
           },
-          // The paper clears as the dust finishes drawing the page, so the real page
-          // appears exactly under the drawing.
-          onReveal: (f) => {
-            if (paperRef.current) paperRef.current.style.opacity = String(1 - f);
-            if (overlayRef.current) overlayRef.current.style.pointerEvents = f > 0.5 ? "none" : "";
+          // Lights dim: the cream paper turns to the page's dark tone (#1c1a1d) as the drawing
+          // completes, then dissolves, so the real page appears under the drawing without a
+          // bright cream wash over the dark video.
+          onReveal: (dusk, reveal) => {
+            const paper = paperRef.current;
+            if (paper) {
+              const mix = (a: number, b: number) => Math.round(a + (b - a) * dusk);
+              paper.style.backgroundColor = `rgb(${mix(250, 28)}, ${mix(248, 26)}, ${mix(245, 29)})`;
+              paper.style.opacity = String(1 - reveal);
+            }
+            if (paperDecorRef.current) paperDecorRef.current.style.opacity = String(1 - dusk);
+            if (overlayRef.current) overlayRef.current.style.pointerEvents = reveal > 0.5 ? "none" : "";
           },
           onDone: () => {
             rememberIntroSeen();
@@ -115,8 +123,10 @@ export default function BeanIntro() {
         >
           {/* Paper: cream, a faint warm vignette and fine grain. Clears at the end. */}
           <div ref={paperRef} className="absolute inset-0 bg-[#faf8f5]">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_42%,rgba(205,161,177,0.14)_0%,rgba(243,236,233,0.5)_38%,transparent_72%)]" />
-            <div className="pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-multiply" style={{ backgroundImage: GRAIN }} />
+            <div ref={paperDecorRef} className="absolute inset-0">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_42%,rgba(205,161,177,0.14)_0%,rgba(243,236,233,0.5)_38%,transparent_72%)]" />
+              <div className="pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-multiply" style={{ backgroundImage: GRAIN }} />
+            </div>
 
             {ready && (
               <>
