@@ -5,6 +5,8 @@ import { CookieConsentProvider } from "./context/CookieConsentContext";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 import LegalFooter from "./components/LegalFooter";
 import { siteUrl } from "./siteUrl";
+import { introSeenScript } from "./components/intro/introSeen";
+import BeanIntro from "./components/intro/BeanIntro";
 
 // Optimize fonts for faster mobile loading
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -82,12 +84,16 @@ export default function RootLayout({
   return (
     <html lang="de">
       <body className={`${inter.variable} ${greatVibes.variable} ${playfair.variable} font-sans antialiased`}>
+        {/* Must run before the intro overlay is parsed (see components/intro/introSeen.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: introSeenScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(localBusinessJsonLd).replace(/</g, "\\u003c"),
           }}
         />
+        {/* Outside app/template.tsx: its perspective would stop the overlay from being fixed to the screen. */}
+        <BeanIntro />
         <CookieConsentProvider>
           {children}
           <LegalFooter />

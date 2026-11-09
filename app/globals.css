@@ -36,3 +36,14 @@ video::-webkit-media-controls-overlay-play-button {
   display: none !important;
   -webkit-appearance: none;
 }
+
+/* Bean intro (app/components/intro): hidden before hydration for returning
+   visitors (inline script in app/layout.tsx) and for reduced motion. */
+html[data-intro-seen] .bean-intro {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bean-intro {
+    display: none;
+  }
+}
