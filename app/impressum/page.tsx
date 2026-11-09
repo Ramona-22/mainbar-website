@@ -23,9 +23,9 @@ export default function ImpressumPage() {
           <section>
             <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">Angaben gemäß § 5 DDG</h2>
             <p className="text-[#4a4a4a]">
-              [Vor- und Nachname des Inhabers / der Inhaberin]
+              Ramona Krines
               <br />
-              MainBar [Rechtsform, z. B. Einzelunternehmen]
+              MainBar drinks &amp; food (Einzelunternehmen)
               <br />
               Spitalstraße 19
               <br />
@@ -38,23 +38,17 @@ export default function ImpressumPage() {
             <p className="text-[#4a4a4a]">
               Telefon: <a href="tel:+491702278096" className="hover:text-[#b5788f]">+49 170 2278096</a>
               <br />
-              E-Mail: <a href="mailto:info@mainbar-sw.de" className="hover:text-[#b5788f]">info@mainbar-sw.de</a>
+              E-Mail:{" "}
+              <a href="mailto:ramonakrines@gmail.com" className="hover:text-[#b5788f]">
+                ramonakrines@gmail.com
+              </a>
             </p>
           </section>
 
           <section>
             <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">Umsatzsteuer-ID</h2>
             <p className="text-[#4a4a4a]">
-              Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: [USt-IdNr., falls vorhanden –
-              sonst diesen Abschnitt entfernen]
-            </p>
-          </section>
-
-          <section>
-            <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">Registereintrag</h2>
-            <p className="text-[#4a4a4a]">
-              [Nur falls im Handelsregister eingetragen: Registergericht und Registernummer –
-              sonst diesen Abschnitt entfernen]
+              Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: DE357534577
             </p>
           </section>
 
@@ -63,7 +57,7 @@ export default function ImpressumPage() {
               Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
             </h2>
             <p className="text-[#4a4a4a]">
-              [Vor- und Nachname des Inhabers / der Inhaberin]
+              Ramona Krines
               <br />
               Spitalstraße 19, 97421 Schweinfurt
             </p>
@@ -90,17 +84,8 @@ export default function ImpressumPage() {
 
           <section>
             <h2 className="font-serif text-lg text-[#2d2d2d] mb-2">Bildnachweise</h2>
-            <p className="text-[#4a4a4a]">
-              Fotos und Videos: MainBar Schweinfurt [ggf. Fotograf/in ergänzen].
-            </p>
+            <p className="text-[#4a4a4a]">Fotos und Videos: MainBar drinks &amp; food, Schweinfurt.</p>
           </section>
-        </div>
-
-        <div className="mt-14 rounded-2xl border border-dashed border-[#cda1b1]/40 bg-[#cda1b1]/10 p-4 text-xs text-[#6b6b6b]">
-          Hinweis für den Betreiber: Bitte alle Angaben in eckigen Klammern durch die echten Daten
-          ersetzen (bzw. nicht zutreffende Abschnitte entfernen), dieselben Angaben in Ziffer 1 der
-          Datenschutzerklärung eintragen und beides vor Veröffentlichung rechtlich prüfen lassen –
-          z. B. über e-recht24.de oder einen Fachanwalt für IT-Recht. Danach diesen Hinweis entfernen.
         </div>
       </div>
     </main>

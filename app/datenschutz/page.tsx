@@ -35,11 +35,11 @@ export default function DatenschutzPage() {
         <div className="space-y-8 text-sm text-[#2d2d2d] leading-relaxed">
           <Section title="1. Verantwortlicher">
             <p>
-              MainBar, Inhaber/in: [Vor- und Nachname des Inhabers / der Inhaberin]
+              MainBar drinks &amp; food, Inhaberin: Ramona Krines (Einzelunternehmen)
               <br />
               Spitalstraße 19, 97421 Schweinfurt
               <br />
-              E-Mail: <a href="mailto:info@mainbar-sw.de" className={linkClass}>info@mainbar-sw.de</a>
+              E-Mail: <a href="mailto:ramonakrines@gmail.com" className={linkClass}>ramonakrines@gmail.com</a>
               <br />
               Telefon: <a href="tel:+491702278096" className={linkClass}>+49 170 2278096</a>
             </p>
@@ -193,7 +193,7 @@ export default function DatenschutzPage() {
             <p>
               Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,
               Datenübertragbarkeit und Widerspruch (Art. 15–21 DSGVO). Zur Ausübung genügt eine E-Mail an{" "}
-              <a href="mailto:info@mainbar-sw.de" className={linkClass}>info@mainbar-sw.de</a> oder der
+              <a href="mailto:ramonakrines@gmail.com" className={linkClass}>ramonakrines@gmail.com</a> oder der
               Link „Daten löschen“ auf der Startseite.
             </p>
             <p>
