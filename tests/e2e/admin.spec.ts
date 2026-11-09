@@ -60,6 +60,7 @@ test("menu manager groups by homepage tab and saves a new order", async ({ page 
   await addDoc("menu", { name: "Silvaner", price: "7,20", category: "WEINE & LONGDRINKS", isExtra: false });
 
   await login(page);
+  await expect(page.getByRole("button", { name: "Ausloggen" })).toBeVisible();
   // On phones the tabs sit behind the hamburger menu.
   const burger = page.getByRole("button", { name: "Menü öffnen" });
   if (await burger.isVisible()) await burger.click();
