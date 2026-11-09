@@ -173,6 +173,33 @@ const BackgroundVideo = ({
   );
 };
 
+// Menu order per tab, matching the printed Getränkekarte. Items not listed
+// here (e.g. newly added in /admin) come after, sorted by price.
+const MENU_ORDER: Record<string, string[]> = {
+  "HEISSGETRÄNKE": [
+    "Cafe Crema", "Cappuccino", "Espresso", "Espresso Macchiato", "Flat White",
+    "Latte Macchiato", "Milchkaffee", "Filterkaffee Pott", "Chai Latte",
+    "Trinkschokolade", "Tasse Tee",
+  ],
+  "WEINE & LONGDRINKS": [
+    "Silvaner", "Pinot Grigio", "Scheurebe", "Cabernet Dorsa",
+    "Negroni", "Espresso Maintini", "Absolut Vodka", "Tanqueray – London Dry",
+  ],
+};
+
+const menuRank = (item: MenuItem): number => {
+  const name = (item.name ?? "").trim().toLowerCase();
+  // Geschmackssachen: bread dishes first, then sandwiches.
+  if (item.category === "GESCHMACKSSACHEN") return name.startsWith("sandwich") ? 1 : 0;
+  const order = MENU_ORDER[item.category ?? ""];
+  if (!order) return 0;
+  const idx = order.findIndex((n) => n.toLowerCase() === name);
+  return idx === -1 ? order.length : idx;
+};
+
+const compareMenuItems = (a: MenuItem, b: MenuItem) =>
+  menuRank(a) - menuRank(b) || parsePrice(b.price) - parsePrice(a.price);
+
 const parsePrice = (price: unknown): number => {
   if (typeof price === "number") return price;
   if (!price) return 0;
@@ -296,11 +323,11 @@ export default function UnifiedHomePage() {
 
   const mainItems = firestoreMenuData
     .filter((item) => item.category === activeTab && !isExtraItem(item.isExtra))
-    .sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+    .sort(compareMenuItems);
 
   const activeExtras = firestoreMenuData
     .filter((item) => item.category === activeTab && isExtraItem(item.isExtra))
-    .sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+    .sort(compareMenuItems);
 
   const scrollToMenu = () => {
     const menuSection = document.getElementById("menu-section");
