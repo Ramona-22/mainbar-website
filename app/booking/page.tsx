@@ -12,6 +12,8 @@ export default function BookingPage() {
   // State variables needed for the form and loading animations
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  // False when the booking was saved but the confirmation email could not be sent.
+  const [emailSent, setEmailSent] = useState(true);
   const [gdprConsent, setGdprConsent] = useState(false);
   
   // Earliest selectable date (today, local time). Set after mount so the
@@ -51,18 +53,27 @@ export default function BookingPage() {
 
       // 1. Server validates, rate-limits and sends the emails first, so
       //    rejected or spammy submissions never reach the database.
-      const res = await fetch("/api/booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/booking", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } catch (networkError) {
+        console.error("Booking API unreachable:", networkError);
+      }
 
-      if (!res.ok) throw new Error("Booking request failed");
-      const result = (await res.json().catch(() => ({}))) as { stored?: boolean };
+      // 4xx: the server rejected the input or the rate limit hit, so never store it.
+      if (res && res.status >= 400 && res.status < 500) {
+        throw new Error(`Booking rejected (${res.status})`);
+      }
+      const emailed = res?.ok === true;
+      const result = (emailed ? await res!.json().catch(() => ({})) : {}) as { stored?: boolean };
 
-      // 2. The server normally stores the booking itself. Only if it has no
-      //    database access (stored: false) does the browser save it. The owner
-      //    already has the email, so a failure here should not show an error.
+      // 2. The server normally stores the booking itself. If it has no database
+      //    access (stored: false) or the email failed (5xx), the browser saves
+      //    it, so the owner still sees it in /admin and no enquiry is lost.
       if (!result.stored) {
         try {
           await addDoc(collection(db, "bookings"), {
@@ -71,10 +82,13 @@ export default function BookingPage() {
             createdAt: serverTimestamp(),
           });
         } catch (dbError) {
+          // Neither emailed nor saved: the visitor must try again.
+          if (!emailed) throw dbError;
           console.error("Booking saved by email only:", dbError);
         }
       }
 
+      setEmailSent(emailed);
       setIsSuccess(true);
     } catch (error) {
       console.error("Error submitting booking: ", error);
@@ -182,7 +196,8 @@ export default function BookingPage() {
             </div>
             <h2 className="font-serif text-2xl text-[#2d2d2d] mb-4">Vielen Dank!</h2>
             <p className="text-[#a0a0a0] text-sm leading-relaxed mb-8">
-              Ihre Anfrage wurde erfolgreich an uns übermittelt. Bitte überprüfen Sie Ihr E-Mail-Postfach. Wir melden uns in Kürze bei Ihnen.
+              Ihre Anfrage wurde erfolgreich an uns übermittelt.
+              {emailSent && " Bitte überprüfen Sie Ihr E-Mail-Postfach."} Wir melden uns in Kürze bei Ihnen.
             </p>
             <button onClick={() => setIsSuccess(false)} className="text-[#cda1b1] uppercase tracking-widest text-xs font-bold hover:text-[#353941] transition-colors">
               Neue Anfrage stellen

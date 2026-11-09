@@ -14,13 +14,13 @@ export default function LegalFooter() {
   if (pathname === "/" || pathname.startsWith("/admin")) return null;
 
   const linkClass =
-    "text-[10px] md:text-xs uppercase tracking-widest text-[#6b6b6b] hover:text-[#b5788f] transition-colors";
+    "text-[10px] md:text-xs uppercase tracking-[0.12em] md:tracking-widest text-[#6b6b6b] hover:text-[#b5788f] transition-colors";
 
   return (
     <footer className="w-full bg-[#faf8f5] border-t border-gray-200/70 px-6 py-5">
       <nav
         aria-label="Rechtliches"
-        className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-2"
+        className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-6"
       >
         <Link href="/impressum" className={linkClass}>Impressum</Link>
         <Link href="/datenschutz" className={linkClass}>Datenschutz</Link>

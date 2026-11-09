@@ -798,18 +798,18 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
         </div>
 
         <div className="max-w-6xl mx-auto mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-[#a0a0a0] uppercase tracking-widest">
+          <p className="text-[10px] md:text-xs text-[#a0a0a0] uppercase tracking-[0.12em] md:tracking-widest text-center">
             © {new Date().getFullYear()} MainBar Schweinfurt
           </p>
-          <div className="flex gap-6">
-            <Link href="/impressum" className="text-xs text-[#a0a0a0] hover:text-white uppercase tracking-widest transition-colors">Impressum</Link>
-            <Link href="/datenschutz" className="text-xs text-[#a0a0a0] hover:text-white uppercase tracking-widest transition-colors">Datenschutz</Link>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 md:gap-x-6">
+            <Link href="/impressum" className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors">Impressum</Link>
+            <Link href="/datenschutz" className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors">Datenschutz</Link>
             <button 
               onClick={() => { 
                 const event = new CustomEvent('open-cookie-settings');
                 window.dispatchEvent(event);
               }} 
-              className="text-xs text-[#a0a0a0] hover:text-white uppercase tracking-widest transition-colors cursor-pointer"
+              className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors cursor-pointer"
             >
               Cookie-Einstellungen
             </button>
@@ -830,7 +830,7 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
                   }).catch(() => alert("Fehler bei der Anfrage."));
                 }
               }}
-              className="text-xs text-[#a0a0a0] hover:text-white uppercase tracking-widest transition-colors cursor-pointer"
+              className="text-[10px] md:text-xs text-[#a0a0a0] hover:text-white uppercase tracking-[0.12em] md:tracking-widest transition-colors cursor-pointer"
             >
               Daten löschen
             </button>

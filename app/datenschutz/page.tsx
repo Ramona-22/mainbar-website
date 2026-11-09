@@ -138,11 +138,19 @@ export default function DatenschutzPage() {
           <Section title="9. Cookies und lokale Speicherung">
             <p>
               Diese Website setzt keine Cookies zu Analyse-, Tracking- oder Werbezwecken und bindet keine
-              Inhalte Dritter ein, für die eine Einwilligung erforderlich wäre. Gespeichert wird lediglich
+              Inhalte Dritter ein, für die eine Einwilligung erforderlich wäre. Gespeichert wird
               im Local Storage Ihres Browsers (Eintrag „cookie-consent“) Ihre Auswahl im Cookie-Hinweis
               samt Zeitpunkt, Version des Hinweises und einer zufällig erzeugten Kennung, damit der
               Hinweis nicht bei jedem Besuch erneut erscheint. Diese Speicherung ist unbedingt
               erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Nach 12 Monaten wird der Hinweis erneut angezeigt.
+            </p>
+            <p>
+              Beim ersten Besuch der Startseite wird eine kurze Begrüßungsanimation gezeigt. Damit sie
+              nicht bei jedem Seitenaufruf erneut abläuft, speichern wir im Local Storage den Eintrag
+              „mb-intro-seen“ mit dem Wert „1“. Er enthält keine Angaben zu Ihrer Person, wird nicht an
+              uns oder Dritte übertragen und dient allein der Darstellung der Website, wie Sie sie
+              aufrufen (§ 25 Abs. 2 Nr. 2 TDDDG). Sie können ihn jederzeit über die Einstellungen Ihres
+              Browsers löschen; die Animation wird dann erneut gezeigt.
             </p>
             <p>
               Als Nachweis Ihrer Auswahl speichern wir zusätzlich einen anonymen Datensatz in unserer
