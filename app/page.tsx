@@ -11,6 +11,7 @@ const menuCategories = [
   "FRÜHSTÜCK",
   "GESCHMACKSSACHEN",
   "WINZERFLADEN",
+  "SELBSTGEBACKENES",
   "HEISSGETRÄNKE",
   "ALKOHOLFREI",
   "APERITIF & BIER",
@@ -25,6 +26,18 @@ const defaultTabImages: Record<string, string> = {
   "ALKOHOLFREI": "/media/cold-drinks.jpg",
   "APERITIF & BIER": "/media/beer-aperitif.jpg",
   "WEINE & LONGDRINKS": "/media/wine-longdrinks.jpg"
+};
+
+// Short introductions shown at the top of a menu tab (above any items from /admin).
+const tabIntros: Record<string, { eyebrow: string; title: string; text: string[] }> = {
+  "SELBSTGEBACKENES": {
+    eyebrow: "Aus unserer Backstube",
+    title: "Mit Liebe selbst gebacken",
+    text: [
+      "Torten, Kuchen und feines Gebäck entstehen bei uns von Hand – jeden Tag frisch und mit viel Liebe zum Detail. Mal fruchtig und leicht, mal schokoladig und zart, mal ganz klassisch, mal überraschend neu: Geschmack, Stil und Verzierung wechseln mit der Saison und unseren Ideen.",
+      "Welche Köstlichkeiten heute auf Sie warten, entdecken Sie am schönsten direkt bei uns in der Vitrine. Kommen Sie vorbei und probieren Sie sich durch – wir freuen uns auf Sie.",
+    ],
+  },
 };
 
 const fallbackReviews = [
@@ -696,10 +709,27 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
               )}
 
               <div className="relative z-10 w-full md:w-3/4 pr-0 md:pr-8">
+                {tabIntros[activeTab] && (
+                  <div className="mb-10 md:mb-12 max-w-2xl">
+                    <p className="text-xs uppercase tracking-[0.25em] text-[#b5788f] mb-3">
+                      {tabIntros[activeTab].eyebrow}
+                    </p>
+                    <h3 className="font-serif text-2xl md:text-3xl text-[#2d2d2d] mb-4">
+                      {tabIntros[activeTab].title}
+                    </h3>
+                    {tabIntros[activeTab].text.map((line) => (
+                      <p key={line} className="text-sm md:text-base text-[#6b6b6b] leading-relaxed font-light mb-3">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                )}
                 {mainItems.length === 0 && activeExtras.length === 0 ? (
-                  <p className="text-[#a0a0a0] text-base py-10 text-center">
-                    Keine Gerichte in dieser Kategorie gefunden.
-                  </p>
+                  tabIntros[activeTab] ? null : (
+                    <p className="text-[#a0a0a0] text-base py-10 text-center">
+                      Keine Gerichte in dieser Kategorie gefunden.
+                    </p>
+                  )
                 ) : (
                   <>
                     {mainItems.map((item) => (

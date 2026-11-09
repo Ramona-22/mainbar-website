@@ -2,6 +2,7 @@ export const menuCategories = [
   "FRÜHSTÜCK",
   "GESCHMACKSSACHEN",
   "WINZERFLADEN",
+  "SELBSTGEBACKENES",
   "HEISSGETRÄNKE",
   "ALKOHOLFREI",
   "APERITIF & BIER",
