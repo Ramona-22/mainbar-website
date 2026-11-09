@@ -148,8 +148,18 @@ export async function POST(request: Request) {
         console.error("Booking email failed:", mailError);
         // A coarse reason (no secrets) so the owner can tell a missing setting
         // from a rejected Gmail login without access to the server logs.
+        // TEMPORARY (setup check): yes/no only, never the values themselves.
+        const user = process.env.GMAIL_USER ?? "";
+        const pass = process.env.GMAIL_APP_PASSWORD ?? "";
         return NextResponse.json(
-          { error: "Failed to process booking", mail: mailFailureReason(mailError) },
+          {
+            error: "Failed to process booking",
+            mail: mailFailureReason(mailError),
+            userIsMainbar: user === "mainbarsw@gmail.com",
+            userHasExtraSpaces: user !== user.trim(),
+            passwordIs16Letters: /^[a-z]{16}$/.test(pass),
+            passwordHasSpacesOrQuotes: /[\s"']/.test(pass),
+          },
           { status: 500 }
         );
       }
