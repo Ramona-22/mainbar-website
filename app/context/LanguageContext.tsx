@@ -77,9 +77,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   // The browser tab title follows the language too (the server always sends German).
   const pathname = usePathname();
+  // Next.js streams the page title in after hydration, so re-apply it whenever the
+  // <head> changes (the check stops it from reacting to its own update).
   useEffect(() => {
     const titles = TITLES[pathname];
-    if (titles) document.title = titles[lang];
+    if (!titles) return;
+    const apply = () => {
+      if (document.title !== titles[lang]) document.title = titles[lang];
+    };
+    apply();
+    const observer = new MutationObserver(apply);
+    observer.observe(document.head, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
   }, [lang, pathname]);
 
   const value = useMemo<LanguageContextType>(
