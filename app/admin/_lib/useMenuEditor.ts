@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { addDoc, updateDoc, collection, doc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { isExtraItem } from "../../../lib/menuOrder";
 import { emptyMenuForm, menuCategories, type MenuForm, type MenuItem } from "./types";
 
 // State and handlers for the menu add/edit modal.
@@ -9,10 +10,14 @@ export function useMenuEditor() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [menuForm, setMenuForm] = useState<MenuForm>(emptyMenuForm);
   const [isSavingMenu, setIsSavingMenu] = useState(false);
+  // Category and list of the item being edited, to spot a move between tabs.
+  const [editingOriginal, setEditingOriginal] =
+    useState<{ category?: string; isExtra: boolean } | null>(null);
 
   const resetMenuForm = () => {
     setMenuForm(emptyMenuForm());
     setEditingId(null);
+    setEditingOriginal(null);
     setIsMenuModalOpen(false);
   };
 
@@ -38,10 +43,19 @@ export function useMenuEditor() {
         sizes: cleanedSizes.length > 0 ? cleanedSizes : null,
       };
 
+      // A new item, or one moved to another tab or list, goes to the end of
+      // its list: a timestamp is always larger than the saved positions.
       if (editingId) {
-        await updateDoc(doc(db, "menu", editingId), payload);
+        const moved =
+          editingOriginal &&
+          (editingOriginal.category !== payload.category ||
+            editingOriginal.isExtra !== payload.isExtra);
+        await updateDoc(
+          doc(db, "menu", editingId),
+          moved ? { ...payload, order: Date.now() } : payload
+        );
       } else {
-        await addDoc(collection(db, "menu"), payload);
+        await addDoc(collection(db, "menu"), { ...payload, order: Date.now() });
       }
       resetMenuForm();
     } catch (err) {
@@ -59,10 +73,11 @@ export function useMenuEditor() {
       description: item.description || "",
       price: item.price || "",
       image_url: item.image_url || "",
-      isExtra: !!item.isExtra,
+      isExtra: isExtraItem(item.isExtra),
       sizes: item.sizes || [],
     });
     setEditingId(item.id);
+    setEditingOriginal({ category: item.category, isExtra: isExtraItem(item.isExtra) });
     setIsMenuModalOpen(true);
   };
 

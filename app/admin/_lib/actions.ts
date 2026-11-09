@@ -1,4 +1,4 @@
-import { updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { updateDoc, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 
 // ---------- BOOKINGS ----------
@@ -43,6 +43,21 @@ export const deleteReview = async (id: string) => {
 };
 
 // ---------- MENU ----------
+// Saves the position of every item in one list (one homepage tab), in the
+// given order. Returns false on failure so the list can snap back.
+export const saveMenuOrder = async (ids: string[]): Promise<boolean> => {
+  try {
+    const batch = writeBatch(db);
+    ids.forEach((id, index) => batch.update(doc(db, "menu", id), { order: index }));
+    await batch.commit();
+    return true;
+  } catch (err) {
+    console.error(err);
+    alert("Reihenfolge konnte nicht gespeichert werden.");
+    return false;
+  }
+};
+
 export const deleteMenuItem = async (id: string) => {
   if (!window.confirm("Wirklich löschen?")) return;
   try {

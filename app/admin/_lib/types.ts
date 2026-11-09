@@ -53,6 +53,7 @@ export type MenuItem = {
   image_url?: string;
   isExtra?: boolean | string;
   sizes?: SizeOption[];
+  order?: number;
 };
 
 // Shape of the menu editor form.

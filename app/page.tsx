@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { preload } from "react-dom";
 import { motion, AnimatePresence, animate } from "framer-motion";
+import { compareMenuItems, isExtraItem } from "../lib/menuOrder";
 
 const menuCategories = [
   "FRÜHSTÜCK",
@@ -84,6 +85,7 @@ type MenuItem = {
   price?: string | number;
   sizes?: MenuSize[];
   isExtra?: boolean | string;
+  order?: number;
 };
 
 type Review = {
@@ -171,41 +173,6 @@ const BackgroundVideo = ({
       )}
     </>
   );
-};
-
-// Menu order per tab, matching the printed Getränkekarte. Items not listed
-// here (e.g. newly added in /admin) come after, sorted by price.
-const MENU_ORDER: Record<string, string[]> = {
-  "HEISSGETRÄNKE": [
-    "Cafe Crema", "Cappuccino", "Espresso", "Espresso Macchiato", "Flat White",
-    "Latte Macchiato", "Milchkaffee", "Filterkaffee Pott", "Chai Latte",
-    "Trinkschokolade", "Tasse Tee",
-  ],
-  "WEINE & LONGDRINKS": [
-    "Silvaner", "Pinot Grigio", "Scheurebe", "Cabernet Dorsa",
-    "Negroni", "Espresso Maintini", "Absolut Vodka", "Tanqueray – London Dry",
-  ],
-};
-
-const menuRank = (item: MenuItem): number => {
-  const name = (item.name ?? "").trim().toLowerCase();
-  // Geschmackssachen: bread dishes first, then sandwiches.
-  if (item.category === "GESCHMACKSSACHEN") return name.startsWith("sandwich") ? 1 : 0;
-  const order = MENU_ORDER[item.category ?? ""];
-  if (!order) return 0;
-  const idx = order.findIndex((n) => n.toLowerCase() === name);
-  return idx === -1 ? order.length : idx;
-};
-
-const compareMenuItems = (a: MenuItem, b: MenuItem) =>
-  menuRank(a) - menuRank(b) || parsePrice(b.price) - parsePrice(a.price);
-
-const parsePrice = (price: unknown): number => {
-  if (typeof price === "number") return price;
-  if (!price) return 0;
-  const cleaned = String(price).replace(",", ".").replace(/[^0-9.]/g, "");
-  const value = parseFloat(cleaned);
-  return isNaN(value) ? 0 : value;
 };
 
 export default function UnifiedHomePage() {
@@ -317,9 +284,6 @@ export default function UnifiedHomePage() {
     }, 4000);
     return () => clearInterval(interval);
   }, []);
-
-  const isExtraItem = (val: unknown) =>
-    val === true || String(val).toLowerCase() === "true";
 
   const mainItems = firestoreMenuData
     .filter((item) => item.category === activeTab && !isExtraItem(item.isExtra))
