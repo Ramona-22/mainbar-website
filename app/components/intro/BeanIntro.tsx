@@ -1,22 +1,26 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { introSeen, rememberIntroSeen } from "./introSeen";
 
 const noSubscribe = () => () => {};
-const ease = [0.76, 0, 0.24, 1] as const;
+// Heavy, weighted ease used for every reveal in the intro.
+const ease = [0.32, 0.72, 0, 1] as const;
+// Fine paper grain (SVG noise), drawn once as a background image.
+const GRAIN =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")";
 
 /**
- * Full-screen 3D coffee-bean intro (from the Yetenbi site) on a visitor's first visit;
- * it then lifts away to reveal the homepage.
+ * First-visit intro on the homepage: a fine-dust coffee bean (from the Yetenbi site) that pours
+ * into a hairline and then draws the real homepage, which appears under the drawing.
  */
 export default function BeanIntro() {
   /*
     The server can't know whether this is a first visit, so it always renders the overlay. For
     returning visitors an inline script in the root layout marks <html> before the first paint and
-    CSS hides the overlay (no dark flash); once hydrated, storage is read here and the intro unmounts.
+    CSS hides the overlay (no flash); once hydrated, storage is read here and the intro unmounts.
   */
   const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
   const reduce = useReducedMotion();
@@ -24,7 +28,10 @@ export default function BeanIntro() {
   const onHome = usePathname() === "/";
   const skipIntro = !onHome || (hydrated && (introSeen() || !!reduce));
 
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const paperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // `leaving` fades the overlay out (skip button or 3D failure); a normal run ends via `done`.
   const [leaving, setLeaving] = useState(false);
   const [ready, setReady] = useState(false);
   const [skipped, setSkipped] = useState(false);
@@ -35,9 +42,9 @@ export default function BeanIntro() {
     setLeaving(true);
   }, []);
 
-  // Remembered only if the visitor saw the bean or chose "Überspringen". If WebGL was too slow
-  // and the safety timeout closed the overlay, they get the intro on their next visit.
-  const end = useCallback(() => {
+  // After a fade-out: remembered only if the visitor saw the bean or chose "Überspringen". If
+  // WebGL was too slow and the safety timeout closed the overlay, the intro plays next visit.
+  const afterFade = useCallback(() => {
     if (ready || skipped) rememberIntroSeen();
     setDone(true);
   }, [ready, skipped]);
@@ -48,7 +55,7 @@ export default function BeanIntro() {
     const canvas = canvasRef.current;
     let stop: (() => void) | undefined;
     let cancelled = false;
-    // If WebGL never comes up, don't trap the visitor behind a dark screen.
+    // If WebGL never comes up, don't trap the visitor behind the overlay.
     const fallback = setTimeout(() => setLeaving(true), 4000);
 
     import("./beanScene")
@@ -59,7 +66,16 @@ export default function BeanIntro() {
             clearTimeout(fallback);
             setReady(true);
           },
-          onLeave: () => setLeaving(true),
+          // The paper clears as the dust finishes drawing the page, so the real page
+          // appears exactly under the drawing.
+          onReveal: (f) => {
+            if (paperRef.current) paperRef.current.style.opacity = String(1 - f);
+            if (overlayRef.current) overlayRef.current.style.pointerEvents = f > 0.5 ? "none" : "";
+          },
+          onDone: () => {
+            rememberIntroSeen();
+            setDone(true);
+          },
         });
       })
       .catch((err) => {
@@ -84,43 +100,85 @@ export default function BeanIntro() {
     };
   }, [hydrated, skipIntro, done]);
 
-  if (skipIntro || done || !onHome) return null;
+  if (skipIntro || done) return null;
 
   return (
-    <AnimatePresence onExitComplete={end}>
+    <AnimatePresence onExitComplete={afterFade}>
       {!leaving && (
         <motion.div
           key="bean-intro"
-          className="bean-intro fixed inset-0 z-100 bg-[#1c1a1d]"
-          exit={{ clipPath: "inset(0% 0% 100% 0%)" }}
-          transition={{ duration: 1.1, ease }}
+          ref={overlayRef}
+          className="bean-intro fixed inset-0 z-100"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.7, ease }}
           aria-label="Intro"
         >
-          <div className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(205,161,177,0.18)_0%,rgba(201,162,74,0.07)_40%,transparent_70%)]" />
-          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
+          {/* Paper: cream, a faint warm vignette and fine grain. Clears at the end. */}
+          <div ref={paperRef} className="absolute inset-0 bg-[#faf8f5]">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_42%,rgba(205,161,177,0.14)_0%,rgba(243,236,233,0.5)_38%,transparent_72%)]" />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-multiply" style={{ backgroundImage: GRAIN }} />
 
-          {ready && (
-            <motion.div
-              initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-              animate={{
-                opacity: [0, 1, 1, 0],
-                y: [20, 0, 0, -16],
-                filter: ["blur(10px)", "blur(0px)", "blur(0px)", "blur(10px)"],
-              }}
-              transition={{ duration: 3.6, delay: 1.2, times: [0, 0.2, 0.8, 1] }}
-              className="pointer-events-none absolute inset-x-0 bottom-[10%] px-6 text-center"
-            >
-              <p className="font-(family-name:--font-great-vibes) text-6xl text-[#cda1b1] md:text-7xl">MainBar</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.35em] text-white/60">drinks &amp; food</p>
-            </motion.div>
-          )}
+            {ready && (
+              <>
+                {/* Progress hairline */}
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 7.2, ease: [0.45, 0, 0.55, 1] }}
+                  className="absolute inset-x-0 top-0 h-px origin-left bg-[#cda1b1]/70"
+                />
+
+                {/* Caption: masked slide-up reveals, a drawn hairline between. */}
+                <motion.div
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 0 }}
+                  transition={{ delay: 4.0, duration: 0.6, ease }}
+                  className="pointer-events-none absolute inset-x-0 bottom-[11%] flex flex-col items-center px-6 text-center"
+                >
+                  <div className="overflow-hidden pb-2">
+                    <motion.p
+                      initial={{ y: "110%" }}
+                      animate={{ y: "0%" }}
+                      transition={{ delay: 1.3, duration: 1.2, ease }}
+                      className="font-(family-name:--font-great-vibes) text-6xl leading-[1.15] text-[#cda1b1] md:text-7xl"
+                    >
+                      MainBar
+                    </motion.p>
+                  </div>
+                  <motion.span
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ delay: 1.9, duration: 1.0, ease }}
+                    className="mt-3 block h-px w-16 bg-[#cda1b1]/60"
+                  />
+                  <div className="mt-4 overflow-hidden">
+                    <motion.p
+                      initial={{ y: "110%" }}
+                      animate={{ y: "0%" }}
+                      transition={{ delay: 2.2, duration: 1.0, ease }}
+                      className="font-(family-name:--font-playfair) text-[11px] uppercase tracking-[0.42em] text-[#353941]/70"
+                    >
+                      Café &amp; Patisserie · Schweinfurt
+                    </motion.p>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </div>
+
+          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
 
           <button
             type="button"
             onClick={skip}
-            className="absolute bottom-6 right-6 rounded-full border border-white/15 bg-black/30 px-5 py-2.5 text-xs font-medium tracking-wide text-white/80 backdrop-blur-md transition-colors hover:border-[#cda1b1]/60 hover:text-[#cda1b1] md:bottom-8 md:right-8"
+            className="group absolute bottom-6 right-6 flex items-center gap-3 rounded-full bg-white/60 py-1.5 pl-5 pr-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-[#353941] ring-1 ring-[#353941]/10 backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/90 active:scale-[0.98] md:bottom-8 md:right-8"
           >
             Überspringen
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#cda1b1]/20 text-[#d66a7a] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:scale-105">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
           </button>
         </motion.div>
       )}
