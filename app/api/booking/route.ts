@@ -16,6 +16,16 @@ const SEATING_LABELS: Record<string, string> = {
   catering: "Catering",
 };
 
+// "not-configured": GMAIL_USER / GMAIL_APP_PASSWORD missing on the server.
+// "login-rejected": Gmail refused the account or app password.
+// "send-failed": anything else (network, Gmail limits).
+function mailFailureReason(error: unknown) {
+  const e = error as { message?: string; code?: string; responseCode?: number };
+  if (e?.message?.includes("not configured")) return "not-configured";
+  if (e?.code === "EAUTH" || e?.responseCode === 535) return "login-rejected";
+  return "send-failed";
+}
+
 export async function POST(request: Request) {
   try {
     const clientIp = getClientIp(request);
@@ -134,7 +144,15 @@ export async function POST(request: Request) {
         transporter.sendMail(ownerMailOptions(ownerAddress)),
       ]);
     } catch (mailError) {
-      if (!stored) throw mailError;
+      if (!stored) {
+        console.error("Booking email failed:", mailError);
+        // A coarse reason (no secrets) so the owner can tell a missing setting
+        // from a rejected Gmail login without access to the server logs.
+        return NextResponse.json(
+          { error: "Failed to process booking", mail: mailFailureReason(mailError) },
+          { status: 500 }
+        );
+      }
       console.error("Booking stored, but email failed:", mailError);
       return NextResponse.json({ success: true, stored, emailSent: false });
     }
