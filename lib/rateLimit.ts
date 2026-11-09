@@ -6,21 +6,22 @@ export interface RateLimitResult {
   retryAfterSeconds?: number;
 }
 
-// Sliding window: 5 requests per 10 minutes per identifier (typically client IP).
-// A real customer submits the booking form once, maybe twice on a retry —
-// this only bites repeated/automated submissions.
-const WINDOW = "10 m";
-const MAX_REQUESTS = 5;
+export type RateLimitEndpoint = "booking" | "gdpr-delete" | "review";
 
-// Stricter limits for GDPR deletion requests: 2 per 10 minutes
-const GDPR_WINDOW = "10 m";
-const GDPR_MAX_REQUESTS = 2;
-
-// Fallback when Upstash is not configured: a per-server-instance memory
-// window. Weaker than Redis (each serverless instance counts separately) but
-// far better than no limit at all.
-const memoryHits = new Map<string, number[]>();
+// Sliding windows per identifier (client IP or recipient email). A real
+// visitor submits a form once, maybe twice on a retry — these only bite
+// repeated/automated submissions.
+const LIMITS: Record<RateLimitEndpoint, { max: number; window: `${number} m`; prefix: string }> = {
+  booking: { max: 5, window: "10 m", prefix: "mainbar-ratelimit" },
+  "gdpr-delete": { max: 2, window: "10 m", prefix: "mainbar-gdpr-ratelimit" },
+  review: { max: 3, window: "10 m", prefix: "mainbar-review-ratelimit" },
+};
 const WINDOW_MS = 10 * 60 * 1000;
+
+// Fallback when Upstash is not configured or unreachable: a per-server-instance
+// memory window. Weaker than Redis (each serverless instance counts
+// separately) but far better than no limit at all.
+const memoryHits = new Map<string, number[]>();
 
 function checkMemoryLimit(key: string, max: number): RateLimitResult {
   const now = Date.now();
@@ -39,67 +40,53 @@ function checkMemoryLimit(key: string, max: number): RateLimitResult {
   return { allowed: true };
 }
 
-let ratelimit: Ratelimit | null = null;
-let gdprRatelimit: Ratelimit | null = null;
+const limiters = new Map<RateLimitEndpoint, Ratelimit>();
 let warnedMissingConfig = false;
 
-function getRatelimit(): Ratelimit | null {
-  if (ratelimit) return ratelimit;
+function getLimiter(endpoint: RateLimitEndpoint): Ratelimit | null {
+  const existing = limiters.get(endpoint);
+  if (existing) return existing;
 
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
   if (!url || !token) {
     if (!warnedMissingConfig) {
       console.warn(
         "[rateLimit] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not set — using a per-instance in-memory limit only. " +
-          "Set them in production so /api/booking is actually protected against abuse."
+          "Set them in production so the API routes are actually protected against abuse."
       );
       warnedMissingConfig = true;
     }
     return null;
   }
 
-  ratelimit = new Ratelimit({
+  const { max, window, prefix } = LIMITS[endpoint];
+  const limiter = new Ratelimit({
     redis: new Redis({ url, token }),
-    limiter: Ratelimit.slidingWindow(MAX_REQUESTS, WINDOW),
-    prefix: "mainbar-ratelimit",
+    limiter: Ratelimit.slidingWindow(max, window),
+    prefix,
   });
-  return ratelimit;
-}
-
-function getGdprRatelimit(): Ratelimit | null {
-  if (gdprRatelimit) return gdprRatelimit;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) {
-    return null;
-  }
-
-  gdprRatelimit = new Ratelimit({
-    redis: new Redis({ url, token }),
-    limiter: Ratelimit.slidingWindow(GDPR_MAX_REQUESTS, GDPR_WINDOW),
-    prefix: "mainbar-gdpr-ratelimit",
-  });
-  return gdprRatelimit;
+  limiters.set(endpoint, limiter);
+  return limiter;
 }
 
 export async function checkRateLimit(
   identifier: string,
-  endpoint: "booking" | "gdpr-delete" = "booking"
+  endpoint: RateLimitEndpoint = "booking"
 ): Promise<RateLimitResult> {
-  const limiter = endpoint === "gdpr-delete" ? getGdprRatelimit() : getRatelimit();
-  if (!limiter) {
-    const max = endpoint === "gdpr-delete" ? GDPR_MAX_REQUESTS : MAX_REQUESTS;
+  const max = LIMITS[endpoint].max;
+  const limiter = getLimiter(endpoint);
+  if (!limiter) return checkMemoryLimit(`${endpoint}:${identifier}`, max);
+
+  let result: Awaited<ReturnType<Ratelimit["limit"]>>;
+  try {
+    result = await limiter.limit(identifier);
+  } catch (error) {
+    // Redis unreachable: keep a per-instance limit instead of breaking the form.
+    console.error("[rateLimit] Upstash error, using in-memory limit:", error);
     return checkMemoryLimit(`${endpoint}:${identifier}`, max);
   }
-
-  const result = await limiter.limit(identifier);
-  if (result.success) {
-    return { allowed: true };
-  }
+  if (result.success) return { allowed: true };
 
   const retryAfterSeconds = Math.max(0, Math.ceil((result.reset - Date.now()) / 1000));
   return { allowed: false, retryAfterSeconds };

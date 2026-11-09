@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCookieConsent } from "../context/CookieConsentContext";
 
 export default function CookieConsentBanner() {
-  const { showBanner, acknowledge, openSettings } = useCookieConsent();
+  const { showBanner, consent, acknowledge, openSettings, closeBanner } = useCookieConsent();
 
   // The homepage footer opens the notice through this event.
   useEffect(() => {
@@ -14,6 +14,16 @@ export default function CookieConsentBanner() {
     window.addEventListener("open-cookie-settings", handleOpen);
     return () => window.removeEventListener("open-cookie-settings", handleOpen);
   }, [openSettings]);
+
+  // Escape closes the dialog once a choice has been saved.
+  useEffect(() => {
+    if (!showBanner || !consent) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeBanner();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showBanner, consent, closeBanner]);
 
   if (!showBanner) return null;
 
@@ -26,15 +36,25 @@ export default function CookieConsentBanner() {
       animate={{ opacity: 1, y: 0 }}
       className="fixed bottom-0 left-0 right-0 z-50 md:bottom-6 md:left-6 md:right-6 md:max-w-xl mx-auto"
     >
-      <div className="bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-gray-100">
+      <div className="bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-gray-100 relative">
+        {consent && (
+          <button
+            type="button"
+            onClick={closeBanner}
+            aria-label="Schließen"
+            className="absolute top-4 right-5 text-2xl text-gray-400 hover:text-black"
+          >
+            ×
+          </button>
+        )}
         <div className="p-6 md:p-8">
-          <h2 id="cookie-consent-title" className="font-serif text-xl md:text-2xl text-[#2d2d2d] mb-3">
+          <h2 id="cookie-consent-title" className="font-serif text-xl md:text-2xl text-[#2d2d2d] mb-3 pr-8">
             Cookie-Einstellungen
           </h2>
 
           <p id="cookie-consent-text" className="text-sm text-[#6b6b6b] leading-relaxed mb-5">
-            Wir verwenden keine Tracking-, Analyse- oder Werbe-Cookies. Gespeichert wird nur, dass Sie
-            diesen Hinweis gesehen haben, damit er nicht bei jedem Besuch erneut erscheint.
+            Wir verwenden keine Tracking-, Analyse- oder Werbe-Cookies. Gespeichert wird nur Ihre
+            Auswahl, damit dieser Hinweis nicht bei jedem Besuch erneut erscheint.
           </p>
 
           <label className="flex items-start gap-3 mb-6">
@@ -44,16 +64,24 @@ export default function CookieConsentBanner() {
                 Notwendig (immer aktiv)
               </span>
               <span className="block text-xs text-[#6b6b6b]">
-                Speichert diesen Hinweis-Status im Browser (Local Storage). Keine Weitergabe an Dritte.
+                Speichert Ihre Auswahl im Browser (Local Storage) und als anonymen Nachweis (zufällige ID,
+                Version, Zeitpunkt) in unserer Datenbank. Keine Weitergabe an Dritte.
               </span>
             </span>
           </label>
+
+          {consent && (
+            <p className="text-xs text-[#6b6b6b] mb-4" role="status">
+              Gespeichert am {new Date(consent.savedAt).toLocaleString("de-DE")} · ID{" "}
+              <span className="font-mono">{consent.consentId.slice(0, 8)}</span>
+            </p>
+          )}
 
           <button
             onClick={acknowledge}
             className="w-full py-3 rounded-full font-bold uppercase tracking-widest text-[10px] bg-[#353941] text-white hover:bg-[#2a2d33] transition-colors"
           >
-            Verstanden
+            {consent ? "Auswahl erneut speichern" : "Verstanden"}
           </button>
 
           <p className="text-center text-xs text-[#6b6b6b] mt-4">

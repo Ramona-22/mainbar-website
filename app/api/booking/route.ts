@@ -4,6 +4,8 @@ import { checkRateLimit } from "../../../lib/rateLimit";
 import { getClientIp } from "../../../lib/clientIp";
 import { getMailer } from "../../../lib/mailer";
 import { isJsonRequest } from "../../../lib/clientIp";
+import { getAdminDb } from "../../../lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 
 // The customer confirmation goes to an address the visitor typed in, so it
 // must not repeat any free text they entered (city, state, phone): otherwise
@@ -50,6 +52,36 @@ export async function POST(request: Request) {
     }
 
     const { seating, guests, date, state, city, phone, email } = result.data;
+
+    // Second limit per recipient address, so one inbox cannot be flooded
+    // with confirmation emails even from many different IPs.
+    const recipientLimit = await checkRateLimit(`email:${email.toLowerCase()}`);
+    if (!recipientLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+    // Store the booking on the server first (validated data only). Without a
+    // service account the browser stores it instead (stored: false).
+    const adminDb = getAdminDb();
+    let stored = false;
+    if (adminDb) {
+      await adminDb.collection("bookings").add({
+        seating,
+        guests,
+        date,
+        state,
+        city,
+        phone,
+        email,
+        status: "Neu",
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      stored = true;
+    }
+
     const safeDate = escapeHtml(date);
     const safeSeating = escapeHtml(seating);
     const safeState = escapeHtml(state);
@@ -57,10 +89,8 @@ export async function POST(request: Request) {
     const safePhone = escapeHtml(phone);
     const safeEmail = escapeHtml(email);
 
-    const { transporter, ownerAddress } = getMailer();
-
     // 1. Thank You Email to Customer
-    const customerMailOptions = {
+    const customerMailOptions = (ownerAddress: string) => ({
       from: `"MainBar Schweinfurt" <${ownerAddress}>`,
       to: email,
       subject: "Ihre Anfrage bei MainBar Event & Catering",
@@ -74,10 +104,10 @@ export async function POST(request: Request) {
           <p><i>Ihr MainBar Team</i></p>
         </div>
       `,
-    };
+    });
 
     // 2. Alert Email to Owner
-    const ownerMailOptions = {
+    const ownerMailOptions = (ownerAddress: string) => ({
       from: `"MainBar Website" <${ownerAddress}>`,
       to: ownerAddress,
       subject: `Neue Event-Anfrage: ${safeDate} (${guests} Personen)`,
@@ -92,17 +122,26 @@ export async function POST(request: Request) {
           <p><b>Email:</b> ${safeEmail}</p>
         </div>
       `,
-    };
+    });
 
-    // Send both emails simultaneously
-    await Promise.all([
-      transporter.sendMail(customerMailOptions),
-      transporter.sendMail(ownerMailOptions),
-    ]);
+    // Send both emails simultaneously. If the booking is already stored, a mail
+    // failure must not make the visitor submit it again: the owner sees it in /admin.
+    // Missing mail credentials count as a mail failure too (getMailer throws).
+    try {
+      const { transporter, ownerAddress } = getMailer();
+      await Promise.all([
+        transporter.sendMail(customerMailOptions(ownerAddress)),
+        transporter.sendMail(ownerMailOptions(ownerAddress)),
+      ]);
+    } catch (mailError) {
+      if (!stored) throw mailError;
+      console.error("Booking stored, but email failed:", mailError);
+      return NextResponse.json({ success: true, stored, emailSent: false });
+    }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, stored, emailSent: true });
   } catch (error) {
-    console.error("Email send error:", error);
-    return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+    console.error("Booking error:", error);
+    return NextResponse.json({ error: "Failed to process booking" }, { status: 500 });
   }
 }

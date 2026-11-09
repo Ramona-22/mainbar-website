@@ -35,7 +35,7 @@ export default function DatenschutzPage() {
         <div className="space-y-8 text-sm text-[#2d2d2d] leading-relaxed">
           <Section title="1. Verantwortlicher">
             <p>
-              MainBar, Inhaberin: [Name der Inhaberin]
+              MainBar, Inhaber/in: [Vor- und Nachname des Inhabers / der Inhaberin]
               <br />
               Spitalstraße 19, 97421 Schweinfurt
               <br />
@@ -71,10 +71,11 @@ export default function DatenschutzPage() {
 
           <Section title="4. Schutz vor Missbrauch">
             <p>
-              Beim Absenden des Buchungsformulars oder eines Löschantrags verarbeiten wir Ihre IP-Adresse,
-              um die Anzahl der Anfragen pro Absender zu begrenzen und so massenhaft versendete
-              Spam-Anfragen zu verhindern. Die IP-Adresse wird dafür nur kurzzeitig gespeichert (höchstens
-              ca. 20 Minuten), im Arbeitsspeicher unseres Servers und ggf. bei unserem Dienstleister
+              Beim Absenden des Buchungsformulars, einer Bewertung oder eines Löschantrags verarbeiten wir
+              Ihre IP-Adresse (bei Buchungen und Löschanträgen auch die angegebene E-Mail-Adresse), um
+              die Anzahl der Anfragen pro Absender und pro Empfänger zu begrenzen und so massenhaft versendete Spam-Anfragen zu verhindern. Beide
+              Angaben werden dafür nur kurzzeitig gespeichert (höchstens ca. 20 Minuten), im
+              Arbeitsspeicher unseres Servers und ggf. bei unserem Dienstleister
               Upstash, Inc. (Redis-Datenbank). Rechtsgrundlage ist unser berechtigtes Interesse an der
               Sicherheit der Website (Art. 6 Abs. 1 lit. f DSGVO).
             </p>
@@ -138,20 +139,30 @@ export default function DatenschutzPage() {
             <p>
               Diese Website setzt keine Cookies zu Analyse-, Tracking- oder Werbezwecken und bindet keine
               Inhalte Dritter ein, für die eine Einwilligung erforderlich wäre. Gespeichert wird lediglich
-              im Local Storage Ihres Browsers (Eintrag „cookie-consent“), dass Sie unseren
-              Cookie-Hinweis gesehen haben, samt Zeitpunkt, damit er nicht bei jedem Besuch erneut
-              erscheint. Diese Speicherung ist unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG); die
-              Angaben verlassen Ihr Gerät nicht. Nach 12 Monaten wird der Hinweis erneut angezeigt.
+              im Local Storage Ihres Browsers (Eintrag „cookie-consent“) Ihre Auswahl im Cookie-Hinweis
+              samt Zeitpunkt, Version des Hinweises und einer zufällig erzeugten Kennung, damit der
+              Hinweis nicht bei jedem Besuch erneut erscheint. Diese Speicherung ist unbedingt
+              erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Nach 12 Monaten wird der Hinweis erneut angezeigt.
             </p>
             <p>
-              Den Hinweis können Sie jederzeit über „Cookie-Einstellungen“ am Seitenende erneut aufrufen.
-              Den gespeicherten Eintrag können Sie außerdem über die Einstellungen Ihres Browsers löschen.
+              Als Nachweis Ihrer Auswahl speichern wir zusätzlich einen anonymen Datensatz in unserer
+              Firebase-Datenbank (Ziffer 10): die zufällige Kennung, die Version des Hinweises und den
+              Zeitpunkt. IP-Adresse, Browserdaten oder andere Angaben zu Ihrer Person speichern wir dabei
+              nicht; beim Speichern wird Ihre IP-Adresse technisch bedingt an Google übermittelt. Der
+              Datensatz wird nach drei Jahren automatisch gelöscht. Rechtsgrundlage ist unsere
+              Nachweispflicht (Art. 5 Abs. 2, Art. 7 Abs. 1 i. V. m. Art. 6 Abs. 1 lit. c und f DSGVO).
+            </p>
+            <p>
+              Den Hinweis können Sie jederzeit über „Cookie-Einstellungen“ am Seitenende erneut aufrufen;
+              dort sehen Sie auch Zeitpunkt und Kennung Ihrer gespeicherten Auswahl. Den Eintrag im Browser
+              können Sie über die Einstellungen Ihres Browsers löschen.
             </p>
           </Section>
 
           <Section title="10. Firebase (Google Cloud)">
             <p>
-              Für die Speisekarte, Bewertungen und Buchungsanfragen nutzen wir die Datenbank Firebase
+              Für die Speisekarte, Bewertungen, Buchungsanfragen und die Nachweise zu Cookie-Einstellungen
+              nutzen wir die Datenbank Firebase
               Cloud Firestore der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland.
               Beim Aufruf der Startseite lädt Ihr Browser die Speisekarte und die veröffentlichten
               Bewertungen direkt von Servern von Google; dabei wird Ihre IP-Adresse an Google übermittelt.
@@ -212,7 +223,8 @@ export default function DatenschutzPage() {
               Wir speichern personenbezogene Daten nur so lange, wie es für den jeweiligen Zweck
               erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen (z. B. bis zu 10 Jahre für
               steuerrelevante Unterlagen bei zustande gekommenen Aufträgen). Buchungsanfragen und
-              Bewertungen löschen wir nach Abschluss der Bearbeitung bzw. auf Ihren Wunsch.
+              Bewertungen löschen wir nach Abschluss der Bearbeitung bzw. auf Ihren Wunsch. Anonyme
+              Nachweise zu Cookie-Einstellungen werden nach drei Jahren automatisch gelöscht.
             </p>
           </Section>
         </div>

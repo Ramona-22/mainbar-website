@@ -1,4 +1,6 @@
 const isDev = process.env.NODE_ENV !== "production";
+// Test builds that talk to the local Firebase emulators (npm run test:e2e).
+const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "1";
 
 // Content Security Policy. 'unsafe-inline' for scripts is needed because Next
 // inlines its bootstrap scripts (switching to nonces would make every page
@@ -8,15 +10,17 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://images.unsplash.com",
+  "img-src 'self' data: blob:",
   "font-src 'self'",
-  "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com",
+  `connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com${
+    useEmulators ? " http://127.0.0.1:8080 http://127.0.0.1:9099 ws://127.0.0.1:8080" : ""
+  }`,
   "frame-src https://*.firebaseapp.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  ...(isDev ? [] : ["upgrade-insecure-requests"]),
+  ...(isDev || useEmulators ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const securityHeaders = [
@@ -31,16 +35,6 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        port: "",
-        pathname: "/**",
-      },
-    ],
-  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

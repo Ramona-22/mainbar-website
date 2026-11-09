@@ -32,7 +32,18 @@ export function subscribeApprovedReviews(
   );
 }
 
+// The server validates, rate-limits and stores the review. Only if it has no
+// database access (stored: false) does the browser store it directly.
 export async function submitReview(review: { author: string; text: string; rating: number }) {
+  const res = await fetch("/api/review", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(review),
+  });
+  const result = (await res.json().catch(() => ({}))) as { stored?: boolean; error?: string };
+  if (!res.ok) throw new Error(result.error ?? `Review request failed (${res.status})`);
+  if (result.stored) return;
+
   await addDoc(collection(db, "reviews"), {
     author: review.author,
     text: review.text,

@@ -13,7 +13,9 @@ export type BookingValidationResult =
   | { valid: false; error: string };
 
 const SEATING_OPTIONS = new Set(["inside", "outside", "catering"]);
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// One plain address only: commas, semicolons, angle brackets, quotes and
+// brackets are rejected so a single request cannot mail several recipients.
+const EMAIL_PATTERN = /^[^\s@,;<>"()[\]\\]+@[^\s@,;<>"()[\]\\]+\.[^\s@,;<>"()[\]\\]+$/;
 const MAX_TEXT_LENGTH = 200;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 24 * 60 * 60 * 1000;

@@ -15,6 +15,7 @@ on:
     paths:
       - firestore.rules
       - firebase.json
+      - firestore.indexes.json
       - .github/workflows/deploy-firestore-rules.yml
   workflow_dispatch:
 
@@ -29,24 +30,28 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      # Only a yes/no flag at job level; the key itself is passed to the
+      # deploy step alone.
+      HAS_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
     steps:
       - name: Skip until the secret is configured
-        if: env.FIREBASE_SERVICE_ACCOUNT == ''
+        if: env.HAS_SA != 'true'
         run: echo "::warning::FIREBASE_SERVICE_ACCOUNT secret not set - rules were NOT deployed."
 
       - uses: actions/checkout@v4
-        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        if: env.HAS_SA == 'true'
 
       - uses: actions/setup-node@v4
-        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        if: env.HAS_SA == 'true'
         with:
           node-version: 20
 
       - name: Deploy rules
-        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        if: env.HAS_SA == 'true'
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
+          trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npx --yes firebase-tools@14 deploy --only firestore:rules --project mainbar-1fe16 --non-interactive
-          rm -f "$RUNNER_TEMP/sa.json"

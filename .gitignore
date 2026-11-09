@@ -46,3 +46,15 @@ next-env.d.ts
 
 # browser test logs
 /.playwright-mcp/
+
+# graphify
+graphify-out/
+
+# test output (Playwright, Firebase emulators)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

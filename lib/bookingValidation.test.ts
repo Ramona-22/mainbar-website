@@ -29,6 +29,12 @@ describe("validateBooking", () => {
     expect(result.valid).toBe(false);
   });
 
+  it("rejects an email that lists several recipients", () => {
+    for (const email of ["a@b.de,evil@x.com", "a@b.de;evil@x.com", "Eve <a@b.de>"]) {
+      expect(validateBooking({ ...validPayload, email }).valid).toBe(false);
+    }
+  });
+
   it("rejects an invalid email address", () => {
     const result = validateBooking({ ...validPayload, email: "not-an-email" });
     expect(result.valid).toBe(false);

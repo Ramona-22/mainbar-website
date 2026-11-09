@@ -10,7 +10,6 @@ Website for MainBar, café & bar in Schweinfurt (Spitalstraße 19). Built with N
 | `/booking` | Table / catering request form (stored in Firestore, notification via `/api/booking`) |
 | `/admin` | Staff portal (Firebase Auth): manage bookings and menu items |
 | `/impressum`, `/datenschutz` | Legal pages |
-| `/rustic/*`, `/menu`, `/gallery`, `/contact` | Alternative design template pages |
 | `/api/gdpr-delete` | GDPR data deletion endpoint |
 
 ## Setup

@@ -44,6 +44,13 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const emailLimit = await checkRateLimit(`email:${email.trim().toLowerCase()}`, "gdpr-delete");
+    if (!emailLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
     const safeEmail = escapeHtml(email.trim());
 
     const { transporter, ownerAddress } = getMailer();

@@ -38,7 +38,8 @@ service cloud.firestore {
         && request.resource.data.seating in ['inside', 'outside', 'catering']
         && request.resource.data.guests is int
         && request.resource.data.guests >= 1 && request.resource.data.guests <= 30
-        && shortString(request.resource.data.date, 40)
+        && shortString(request.resource.data.date, 10)
+        && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && shortString(request.resource.data.state, 200)
         && shortString(request.resource.data.city, 200)
         && shortString(request.resource.data.phone, 40)
@@ -70,6 +71,27 @@ service cloud.firestore {
     match /menu/{id} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Anonymous proof of cookie choices (lib/consentLog.ts): random ID,
+    // notice version, server time and a ~3-year expiry (expired records are
+    // deleted by the admin dashboard). Public create only, never changed,
+    // admin-only read and delete.
+    match /cookieConsents/{id} {
+      allow read, delete: if isAdmin();
+      allow update: if false;
+      allow create: if
+        request.resource.data.keys().hasOnly(['consentId', 'necessary', 'version', 'createdAt', 'expireAt'])
+        && request.resource.data.keys().hasAll(['consentId', 'necessary', 'version', 'createdAt', 'expireAt'])
+        && request.resource.data.consentId is string
+        && request.resource.data.consentId.matches('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
+        && request.resource.data.necessary == true
+        && request.resource.data.version is int
+        && request.resource.data.version >= 1 && request.resource.data.version <= 1000
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.expireAt is timestamp
+        && request.resource.data.expireAt > request.time + duration.value(1000, 'd')
+        && request.resource.data.expireAt < request.time + duration.value(1100, 'd');
     }
 
     // Admin allow-list: managed only in the Firebase console.

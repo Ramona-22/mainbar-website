@@ -1,10 +1,12 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../lib/firebase"; 
 import Link from "next/link";
+
+const subscribeNoop = () => () => {};
 
 export default function BookingPage() {
   // State variables needed for the form and loading animations
@@ -12,6 +14,14 @@ export default function BookingPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
   
+  // Earliest selectable date (today, local time). Set after mount so the
+  // server-rendered HTML and the first client render match.
+  const minDate = useSyncExternalStore(
+    subscribeNoop,
+    () => new Date().toLocaleDateString("sv-SE"),
+    () => undefined
+  );
+
   const [formData, setFormData] = useState({
     seating: "inside",
     guests: 1,
@@ -47,18 +57,22 @@ export default function BookingPage() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Failed to send notification emails");
+      if (!res.ok) throw new Error("Booking request failed");
+      const result = (await res.json().catch(() => ({}))) as { stored?: boolean };
 
-      // 2. Save for the admin dashboard. The owner already has the email,
-      //    so a failure here should not show the customer an error.
-      try {
-        await addDoc(collection(db, "bookings"), {
-          ...payload,
-          status: "Neu",
-          createdAt: serverTimestamp(),
-        });
-      } catch (dbError) {
-        console.error("Booking saved by email only:", dbError);
+      // 2. The server normally stores the booking itself. Only if it has no
+      //    database access (stored: false) does the browser save it. The owner
+      //    already has the email, so a failure here should not show an error.
+      if (!result.stored) {
+        try {
+          await addDoc(collection(db, "bookings"), {
+            ...payload,
+            status: "Neu",
+            createdAt: serverTimestamp(),
+          });
+        } catch (dbError) {
+          console.error("Booking saved by email only:", dbError);
+        }
       }
 
       setIsSuccess(true);
@@ -109,7 +123,7 @@ export default function BookingPage() {
 
                 <div className="flex flex-col md:col-span-2">
                   <label htmlFor="booking-date" className="text-xs uppercase tracking-widest text-[#767676] mb-2">Datum</label>
-                  <input id="booking-date" name="date" type="date" required value={formData.date} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent cursor-pointer" />
+                  <input id="booking-date" name="date" type="date" required min={minDate} value={formData.date} onChange={handleChange} className="border-b border-gray-200 py-2 focus:outline-none focus:border-[#cda1b1] text-[#2d2d2d] bg-transparent cursor-pointer" />
                 </div>
 
                 <div className="flex flex-col">
