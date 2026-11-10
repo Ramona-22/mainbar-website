@@ -533,24 +533,23 @@ export default function UnifiedHomePage() {
 
         <div className="relative z-20 w-full h-full flex">
           <div className="w-full lg:w-1/2 h-full flex flex-col items-center justify-center text-center px-8">
-            <div className="hero-fade-up flex flex-col items-center -translate-y-1.75">
-              <div className="relative inline-flex flex-col items-center justify-center">
-                <div className="absolute w-44 h-44 md:w-52 md:h-52 border-2 border-[#cda1b1]/55 rounded-full -top-7 left-1/2 translate-x-[-58%] z-0 pointer-events-none"></div>
-                <div className="absolute w-44 h-44 md:w-52 md:h-52 border-2 border-[#cda1b1]/55 rounded-full -top-5 left-1/2 translate-x-[-38%] z-0 pointer-events-none"></div>
-                
-                <h1 className="font-(family-name:--font-great-vibes) text-8xl md:text-9xl lg:text-[9.5rem] text-[#cda1b1] relative z-10 leading-none drop-shadow-2xl">
-                  MainBar
-                </h1>
-              </div>
-
-              <div className="text-sm md:text-base tracking-[0.4em] text-white uppercase mt-2 z-10 drop-shadow-md text-center">
-                Drinks & Food
-              </div>
-            </div>
+            <h1 className="hero-fade-up w-full max-w-[22rem] md:max-w-[28rem] lg:max-w-[32rem]">
+              {/* Original logo with light lettering for the dark video. The intro traces this image. */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- vector logo, no resizing needed */}
+              <img
+                src="/media/mainbar-logo-light.svg"
+                alt="MainBar – Drinks & Food"
+                width={624}
+                height={392}
+                data-intro-trace
+                fetchPriority="high"
+                className="w-full h-auto drop-shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
+              />
+            </h1>
 
             <h2
               style={{ animationDelay: "0.3s" }}
-              className="hero-fade text-white tracking-[0.25em] pl-[0.25em] uppercase text-base md:text-lg font-medium mt-10 mb-10 drop-shadow-md text-center"
+              className="hero-fade text-white tracking-[0.25em] pl-[0.25em] uppercase text-base md:text-lg font-medium mt-6 mb-10 drop-shadow-md text-center"
             >
               {L("Café & Bistro", "Café & Bistro")}
             </h2>
@@ -864,7 +863,7 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h3 className="text-xs tracking-[0.2em] uppercase text-[#cda1b1] font-bold mb-6">{L("Öffnungszeiten", "Opening hours")}</h3>
             <p className="text-base text-gray-300 mb-2">{L("So & Mo: Ruhetag", "Sun & Mon: closed")}</p>
-            <p className="text-base text-gray-300 mb-2">{L("Di - Sa: 09:30 - 18:00 Uhr", "Tue – Sat: 9:30 am – 6:00 pm")}</p>
+            <p className="text-base text-gray-300 mb-2">{L("Di - Sa: 09:30 - 17:00 Uhr", "Tue – Sat: 9:30 am – 5:00 pm")}</p>
             <p className="text-base text-gray-300">{L("Feiertage: 10:00 - 18:00 Uhr", "Public holidays: 10:00 am – 6:00 pm")}</p>
           </div>
 

@@ -37,6 +37,12 @@ video::-webkit-media-controls-overlay-play-button {
   -webkit-appearance: none;
 }
 
+/* Keep room for the scrollbar while the intro locks scrolling, so the page
+   does not jump sideways when the intro ends and the scrollbar returns. */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Bean intro (app/components/intro): hidden before hydration for returning
    visitors (inline script in app/layout.tsx) and for reduced motion. */
 html[data-intro-seen] .bean-intro {

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "MainBar – Café & Bar in Schweinfurt | Frühstück, Wein & Events",
   description:
-    "MainBar in der Spitalstraße 19, Schweinfurt: Frühstück, Winzerfladen, Kaffee, Wein und Drinks – plus Events & Catering. Di–Sa 9:30–18 Uhr, So 10–18 Uhr.",
+    "MainBar in der Spitalstraße 19, Schweinfurt: Frühstück, Winzerfladen, Kaffee, Wein und Drinks – plus Events & Catering. Di–Sa 9:30–17 Uhr, So & Mo Ruhetag.",
   openGraph: {
     type: "website",
     locale: "de_DE",
@@ -66,7 +66,7 @@ const localBusinessJsonLd = {
       "@type": "OpeningHoursSpecification",
       dayOfWeek: ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
       opens: "09:30",
-      closes: "18:00",
+      closes: "17:00",
     },
   ],
   sameAs: ["https://www.instagram.com/mainbar_sw/", "https://www.facebook.com/MainbarSW/"],

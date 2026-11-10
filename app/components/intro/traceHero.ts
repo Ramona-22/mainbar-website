@@ -111,6 +111,17 @@ function drawLines(ctx: CanvasRenderingContext2D, root: HTMLElement, w: number, 
   }
 }
 
+// Images marked data-intro-trace (the hero logo) are drawn as they are, so the dust draws the
+// real logo at its exact spot.
+function drawImages(ctx: CanvasRenderingContext2D, root: HTMLElement, w: number, h: number) {
+  for (const img of Array.from(root.querySelectorAll<HTMLImageElement>("img[data-intro-trace]"))) {
+    if (!img.complete || !img.naturalWidth) continue;
+    const r = img.getBoundingClientRect();
+    if (!visibleIn(r, w, h) || hidden(getComputedStyle(img))) continue;
+    ctx.drawImage(img, r.left, r.top, r.width, r.height);
+  }
+}
+
 /** Samples up to `max` points from the page's line art; null if nothing usable was found. */
 export function traceHero(width: number, height: number, max: number): HeroTrace | null {
   const root = document.querySelector("main");
@@ -122,10 +133,22 @@ export function traceHero(width: number, height: number, max: number): HeroTrace
 
   if (root) {
     drawLines(ctx, root, width, height);
+    drawImages(ctx, root, width, height);
     drawText(ctx, root, width, height);
   }
 
-  const data = ctx.getImageData(0, 0, c.width, c.height).data;
+  let data: Uint8ClampedArray;
+  try {
+    data = ctx.getImageData(0, 0, c.width, c.height).data;
+  } catch {
+    // A browser that treats the drawn image as cross-origin: trace without it.
+    ctx.clearRect(0, 0, c.width, c.height);
+    if (root) {
+      drawLines(ctx, root, width, height);
+      drawText(ctx, root, width, height);
+    }
+    data = ctx.getImageData(0, 0, c.width, c.height).data;
+  }
   let hits: number[] = [];
   for (let i = 0, p = 0; i < data.length; i += 4, p++) if (data[i + 3] > 110) hits.push(p);
 

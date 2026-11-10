@@ -147,15 +147,17 @@ export default function BeanIntro() {
                   transition={{ delay: 4.0, duration: 0.6, ease }}
                   className="pointer-events-none absolute inset-x-0 bottom-[11%] flex flex-col items-center px-6 text-center"
                 >
-                  <div className="overflow-hidden pb-2">
-                    <motion.p
+                  <div className="overflow-hidden pb-1">
+                    <motion.img
+                      src="/media/mainbar-logo.svg"
+                      alt="MainBar"
+                      width={624}
+                      height={392}
                       initial={{ y: "110%" }}
                       animate={{ y: "0%" }}
                       transition={{ delay: 1.3, duration: 1.2, ease }}
-                      className="font-(family-name:--font-great-vibes) text-6xl leading-[1.15] text-[#cda1b1] md:text-7xl"
-                    >
-                      MainBar
-                    </motion.p>
+                      className="h-auto w-48 md:w-60"
+                    />
                   </div>
                   <motion.span
                     initial={{ scaleX: 0 }}

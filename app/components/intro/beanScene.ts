@@ -17,9 +17,10 @@ const FALL_AT = 4.3; // bean pours down
 const TRACE_AT = 5.3; // dust rises from the line and draws the page
 const TRACE_SPEED = 1 / 1.45; // trace progress per second; complete at 1.25
 const TRACE_END = 1.25;
-const DUSK_TIME = 0.9; // paper darkens to the page's tone
-const REVEAL_TIME = 0.7; // dark paper dissolves, real page shows
-const FADE_TIME = 0.6; // dust dissolves into the page
+// Long, overlapping steps so the drawing melts into the page instead of switching over.
+const DUSK_TIME = 1.1; // paper darkens to the page's tone
+const REVEAL_TIME = 1.2; // dark paper dissolves, real page shows
+const FADE_TIME = 1.1; // dust dissolves into the page
 
 function rng(seed: number) {
   let s = seed;
@@ -141,9 +142,10 @@ const fragment = /* glsl */ `
   }
 `;
 
+// Smootherstep: starts and ends with zero speed and zero acceleration, so fades have no visible kick.
 const smooth = (x: number) => {
   const t = Math.min(1, Math.max(0, x));
-  return t * t * (3 - 2 * t);
+  return t * t * t * (t * (t * 6 - 15) + 10);
 };
 
 /**
