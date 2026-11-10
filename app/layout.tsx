@@ -68,12 +68,6 @@ const localBusinessJsonLd = {
       opens: "09:30",
       closes: "18:00",
     },
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Sunday"],
-      opens: "10:00",
-      closes: "18:00",
-    },
   ],
   sameAs: ["https://www.instagram.com/mainbar_sw/", "https://www.facebook.com/MainbarSW/"],
 };

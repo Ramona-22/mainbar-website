@@ -147,7 +147,7 @@ export function guestConfirmation(b: BookingMailData, lang: MailLang = "de") {
   body += paragraph("Wir melden uns in Kürze persönlich bei Ihnen.");
   body += button(`${SITE}/#menu-section`, "Speisekarte ansehen");
   body += paragraph(
-    "Öffnungszeiten: Di–Sa 09:30–18:00 Uhr · Sonn- & Feiertage 10:00–18:00 Uhr · Montag Ruhetag",
+    "Öffnungszeiten: Di–Sa 09:30–18:00 Uhr · Feiertage 10:00–18:00 Uhr · Sonntag & Montag Ruhetag",
     `margin-top:22px;font-size:13px;color:${colors.muted}`
   );
   body += paragraph("Ihr MainBar Team", `margin-top:22px;color:${colors.muted}`);
@@ -161,7 +161,7 @@ export function guestConfirmation(b: BookingMailData, lang: MailLang = "de") {
     "",
     "Wir prüfen die Verfügbarkeit und melden uns in Kürze persönlich bei Ihnen.",
     "",
-    "Öffnungszeiten: Di–Sa 09:30–18:00 Uhr, Sonn- & Feiertage 10:00–18:00 Uhr, Montag Ruhetag",
+    "Öffnungszeiten: Di–Sa 09:30–18:00 Uhr, Feiertage 10:00–18:00 Uhr, Sonntag & Montag Ruhetag",
     "",
     "Ihr MainBar Team",
     "Spitalstraße 19, 97421 Schweinfurt · +49 170 2278096",
@@ -189,7 +189,7 @@ function guestConfirmationEn(b: BookingMailData) {
   body += paragraph("We will get back to you personally very soon.");
   body += button(`${SITE}/#menu-section`, "View our menu");
   body += paragraph(
-    "Opening hours: Tue–Sat 9:30 am–6:00 pm · Sun & public holidays 10:00 am–6:00 pm · closed on Mondays",
+    "Opening hours: Tue–Sat 9:30 am–6:00 pm · public holidays 10:00 am–6:00 pm · closed on Sundays & Mondays",
     `margin-top:22px;font-size:13px;color:${colors.muted}`
   );
   body += paragraph("Your MainBar team", `margin-top:22px;color:${colors.muted}`);
@@ -203,7 +203,7 @@ function guestConfirmationEn(b: BookingMailData) {
     "",
     "We are checking availability and will get back to you personally very soon.",
     "",
-    "Opening hours: Tue–Sat 9:30 am–6:00 pm, Sun & public holidays 10:00 am–6:00 pm, closed on Mondays",
+    "Opening hours: Tue–Sat 9:30 am–6:00 pm, public holidays 10:00 am–6:00 pm, closed on Sundays & Mondays",
     "",
     "Your MainBar team",
     "Spitalstraße 19, 97421 Schweinfurt, Germany · +49 170 2278096",

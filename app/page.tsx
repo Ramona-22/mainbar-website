@@ -863,9 +863,9 @@ className="hidden md:block absolute -top-8 -right-8 w-48 h-48 rounded-[40%_0_0_8
 
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h3 className="text-xs tracking-[0.2em] uppercase text-[#cda1b1] font-bold mb-6">{L("Öffnungszeiten", "Opening hours")}</h3>
-            <p className="text-base text-gray-300 mb-2">{L("Mo: Ruhetag", "Mon: closed")}</p>
+            <p className="text-base text-gray-300 mb-2">{L("So & Mo: Ruhetag", "Sun & Mon: closed")}</p>
             <p className="text-base text-gray-300 mb-2">{L("Di - Sa: 09:30 - 18:00 Uhr", "Tue – Sat: 9:30 am – 6:00 pm")}</p>
-            <p className="text-base text-gray-300">{L("Sonn- u. Feiertage: 10:00 - 18:00 Uhr", "Sun & public holidays: 10:00 am – 6:00 pm")}</p>
+            <p className="text-base text-gray-300">{L("Feiertage: 10:00 - 18:00 Uhr", "Public holidays: 10:00 am – 6:00 pm")}</p>
           </div>
 
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
