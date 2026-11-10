@@ -160,9 +160,9 @@ export default function BeanIntro() {
                       transition={{ delay: 2.2, duration: 1.0, ease }}
                       // pl matches the letter spacing, which adds space after the last letter,
                       // so the text sits exactly on the centre line under the hairline.
-                      className="pl-[0.42em] text-center font-(family-name:--font-playfair) text-[11px] uppercase tracking-[0.42em] text-[#353941]/70"
+                      className="whitespace-nowrap pl-[0.3em] text-center font-(family-name:--font-playfair) text-[10px] uppercase tracking-[0.3em] text-[#353941]/70 md:pl-[0.42em] md:text-[11px] md:tracking-[0.42em]"
                     >
-                      Café &amp; Bistro
+                      {L("Ankommen · Abschalten · Genießen", "Arrive · Unwind · Enjoy")}
                     </motion.p>
                   </div>
                 </motion.div>
