@@ -214,7 +214,7 @@ export function startBeanScene(
   // Outer group tilts the bean a little; inner group turns it.
   const tilt = new THREE.Group();
   tilt.rotation.z = -0.35;
-  tilt.position.y = 0.55;
+  tilt.position.y = 0.35;
   const spin = new THREE.Group();
   spin.add(points);
   tilt.add(spin);
@@ -226,7 +226,7 @@ export function startBeanScene(
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    uniforms.uFit.value = (Math.min(1, camera.aspect / 0.6) * 0.85 + 0.15) * 0.66;
+    uniforms.uFit.value = (Math.min(1, camera.aspect / 0.6) * 0.85 + 0.15) * 1.0;
   };
   resize();
   window.addEventListener("resize", resize);
