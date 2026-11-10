@@ -156,7 +156,7 @@ export default function BeanIntro() {
                       initial={{ y: "110%" }}
                       animate={{ y: "0%" }}
                       transition={{ delay: 1.3, duration: 1.2, ease }}
-                      className="h-auto w-48 md:w-60"
+                      className="h-auto w-64 md:w-80"
                     />
                   </div>
                   <motion.span
